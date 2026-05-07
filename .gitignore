@@ -1,0 +1,16 @@
+# Stray virtualenv
+.venv/
+
+# Per-event directories are managed on dedicated branches, not master.
+# Branch-per-event keeps master clean.
+# Add specific event dirs here on master, then untrack them on the event branch.
+
+
+# Common ignores
+__pycache__/
+*.pyc
+.DS_Store
+*.swp
+.idea/
+.vscode/
+.ipynb_checkpoints/
