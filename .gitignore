@@ -119,5 +119,11 @@ TBXT/data/logs/
 TBXT/report/task*.json
 TBXT/report/backup_*/
 
+# ─── Lead-only HPC submission scripts (contain SCC config; never share) ───
+/HPC.sh
+/RSYNC_REMOTE.sh
+/.rsync_logs/
+/.tbxt_hpc_config
+
 # ─── Files we DO want in git (overrides above with explicit !) ─────────────
 # (None currently — keep this section in case we need it later)
