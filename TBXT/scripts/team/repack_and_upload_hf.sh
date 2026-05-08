@@ -80,15 +80,25 @@ fi
 # HF caps single LFS files at 5 GB unless the repo is configured for large
 # files via 'hf lfs-enable-largefiles'. This is a local git config change
 # (multipart transfer agent), no network/auth. Idempotent.
+HF_BIN="$(command -v hf || true)"
+if [ -z "$HF_BIN" ] && [ -x "$HOME/miniconda3/bin/hf" ]; then
+  HF_BIN="$HOME/miniconda3/bin/hf"
+fi
 if ! grep -q "lfs-multipart-upload" "$HF_LOCAL_CLONE/.git/config" 2>/dev/null; then
-  if command -v hf >/dev/null; then
+  if [ -n "$HF_BIN" ]; then
     log "Enabling HF large-file (>5 GB) support on the local clone"
-    hf lfs-enable-largefiles "$HF_LOCAL_CLONE" >/dev/null
+    "$HF_BIN" lfs-enable-largefiles "$HF_LOCAL_CLONE" >/dev/null
   else
     log "WARN: 'hf' CLI not found. Files >5 GB will fail to push."
     log "      Install once:  pip install huggingface_hub"
     log "      Then re-run this script."
   fi
+fi
+# Pin the LFS multipart transfer agent to an absolute path. By default
+# 'hf lfs-enable-largefiles' writes 'path = hf' which fails when git-lfs
+# invokes it via 'sh -c' without conda's PATH. Force the absolute hf binary.
+if [ -n "$HF_BIN" ]; then
+  ( cd "$HF_LOCAL_CLONE" && git config lfs.customtransfer.multipart.path "$HF_BIN" )
 fi
 
 # Stage existing bundles from the legacy local cache (do this BEFORE the env
