@@ -17,8 +17,25 @@
 
 set -euo pipefail
 
+# ─── Args parsing ──────────────────────────────────────────────────────────
+# --update      : re-download CHECKSUMS, re-extract any bundle whose SHA changed
+# --force       : re-extract every bundle regardless of SHA
+# <positional>  : custom TBXT_ROOT
+UPDATE_MODE="false"
+FORCE_MODE="false"
+POSITIONAL_ARG=""
+for arg in "$@"; do
+  case "$arg" in
+    --update)  UPDATE_MODE="true" ;;
+    --force)   FORCE_MODE="true" ;;
+    --help)    echo "Usage: $0 [--update|--force] [TBXT_ROOT]"; exit 0 ;;
+    -*)        echo "Unknown flag: $arg" >&2; exit 1 ;;
+    *)         POSITIONAL_ARG="$arg" ;;
+  esac
+done
+
 # ─── Configuration ─────────────────────────────────────────────────────────
-TBXT_ROOT="${TBXT_ROOT:-${1:-$HOME}}"
+TBXT_ROOT="${TBXT_ROOT:-${POSITIONAL_ARG:-$HOME}}"
 CLONE_DIR="$TBXT_ROOT/Hackathon"
 PROJECT_DIR="$CLONE_DIR/TBXT"
 CONDA_DIR="${CONDA_DIR:-$HOME/miniconda3}"
@@ -31,6 +48,12 @@ ID_ENV="1G88JAl11RxbzrA_YJinC-ihF556oWYOo"
 ID_DATA="1bIt-i083BhIqO83vGx2mHjFokUGhedQG"
 ID_CHECKSUMS="12K_DjcSEeaGojCHCEgMxYGQByIx48mQY"
 ID_MANIFEST="1Ob6cBitmqw3XcYIXnT1r7204niNUa5F8"
+# Supplement: docked poses + ligands needed by task5/6/8/9 (~2 MB).
+# Set this once the user uploads tbxt_data_supplement.tar.gz to Drive.
+# If empty, setup.sh skips supplement extraction with a warning (members
+# can run task2/3 first to regenerate poses, OR copy from
+# $TBXT_DOWNLOAD_CACHE/tbxt_data_supplement.tar.gz if present locally).
+ID_SUPPLEMENT="${ID_SUPPLEMENT:-}"
 REPO_URL="git@github.com:anandsahuofficial/Hackathon.git"
 REPO_HTTPS="https://github.com/anandsahuofficial/Hackathon.git"
 BRANCH="TBXT"
@@ -104,6 +127,12 @@ fi
 # ─── Step 3: download Drive bundle ──────────────────────────────────────────
 mkdir -p "$DOWNLOAD_CACHE"
 log "Downloading bundles to $DOWNLOAD_CACHE..."
+
+# In --update mode, force re-fetch of CHECKSUMS to detect changes on Drive
+if [ "$UPDATE_MODE" = "true" ] || [ "$FORCE_MODE" = "true" ]; then
+  rm -f "$DOWNLOAD_CACHE/CHECKSUMS.sha256"
+fi
+
 drive_dl "$ID_CHECKSUMS" "$DOWNLOAD_CACHE/CHECKSUMS.sha256"
 drive_dl "$ID_MANIFEST"  "$DOWNLOAD_CACHE/MANIFEST_data_bundle.txt"
 
@@ -120,10 +149,37 @@ log "Verifying checksums..."
 (cd "$DOWNLOAD_CACHE" && sha256sum -c CHECKSUMS.sha256) || err "Checksum verification failed"
 
 # ─── Step 4: unpack the conda env ───────────────────────────────────────────
-if [ -x "$ENV_DIR/bin/python" ]; then
-  log "Conda env $ENV_NAME already unpacked at $ENV_DIR"
-else
-  log "Unpacking conda env to $ENV_DIR..."
+# Helper: returns 0 if local SHA matches Drive SHA for the named tarball
+sha_matches() {
+  local local_path="$1" name="$2"
+  [ -f "$local_path" ] || return 1
+  local expected
+  expected=$(grep -E "[[:space:]]+${name}\$" "$DOWNLOAD_CACHE/CHECKSUMS.sha256" | awk '{print $1}')
+  [ -n "$expected" ] || return 1
+  local actual
+  actual=$(sha256sum "$local_path" | awk '{print $1}')
+  [ "$expected" = "$actual" ]
+}
+
+# Decide whether to (re-)extract env: missing, --force, or --update with SHA change
+need_env_update="false"
+if [ ! -x "$ENV_DIR/bin/python" ]; then
+  need_env_update="true"
+elif [ "$FORCE_MODE" = "true" ]; then
+  need_env_update="true"
+elif [ "$UPDATE_MODE" = "true" ]; then
+  if [ -f "$DOWNLOAD_CACHE/tbxt_env.tar.gz" ] && sha_matches "$DOWNLOAD_CACHE/tbxt_env.tar.gz" "tbxt_env.tar.gz"; then
+    log "Env tarball SHA matches local cache — skipping re-extract"
+  else
+    log "Drive env SHA changed (or missing local) — will re-download + re-extract"
+    rm -f "$DOWNLOAD_CACHE/tbxt_env.tar.gz"
+    need_env_update="true"
+  fi
+fi
+
+if [ "$need_env_update" = "true" ]; then
+  log "Unpacking conda env to $ENV_DIR (may overwrite existing)..."
+  rm -rf "$ENV_DIR"
   mkdir -p "$ENV_DIR"
   tar -xzf "$DOWNLOAD_CACHE/tbxt_env.tar.gz" -C "$ENV_DIR"
   # Activate and conda-unpack
@@ -135,15 +191,64 @@ else
     log "WARNING: conda-unpack not found in env; paths inside env may be hardcoded"
   fi
   set -u
+else
+  log "Conda env $ENV_NAME already up-to-date at $ENV_DIR"
 fi
 
 # ─── Step 5: unpack data bundle into project ────────────────────────────────
-if [ -x "$PROJECT_DIR/bin/gnina" ] && [ -f "$PROJECT_DIR/data/dock/receptor/6F59_apo.pdbqt" ]; then
-  log "Data bundle already extracted into $PROJECT_DIR"
-else
+need_data_update="false"
+if [ ! -x "$PROJECT_DIR/bin/gnina" ] || [ ! -f "$PROJECT_DIR/data/dock/receptor/6F59_apo.pdbqt" ]; then
+  need_data_update="true"
+elif [ "$FORCE_MODE" = "true" ]; then
+  need_data_update="true"
+elif [ "$UPDATE_MODE" = "true" ]; then
+  if sha_matches "$DOWNLOAD_CACHE/tbxt_data_bundle.tar.gz" "tbxt_data_bundle.tar.gz"; then
+    log "Data bundle SHA matches local cache — skipping re-extract"
+  else
+    log "Drive data bundle SHA changed — will re-download + re-extract"
+    rm -f "$DOWNLOAD_CACHE/tbxt_data_bundle.tar.gz"
+    need_data_update="true"
+  fi
+fi
+
+if [ "$need_data_update" = "true" ]; then
   log "Extracting data bundle to $PROJECT_DIR..."
   tar -xzf "$DOWNLOAD_CACHE/tbxt_data_bundle.tar.gz" -C "$PROJECT_DIR"
   chmod +x "$PROJECT_DIR/bin/gnina"
+else
+  log "Data bundle already up-to-date at $PROJECT_DIR"
+fi
+
+# ─── Step 5a: unpack supplement (poses + ligands for task5/6/8/9) ──────────
+SUPPLEMENT_TAR="$DOWNLOAD_CACHE/tbxt_data_supplement.tar.gz"
+n_poses=$(ls "$PROJECT_DIR/data/full_pool_gnina_F/poses" 2>/dev/null | wc -l || echo 0)
+
+need_supp_update="false"
+if [ "$n_poses" -lt 100 ]; then
+  need_supp_update="true"
+elif [ "$FORCE_MODE" = "true" ]; then
+  need_supp_update="true"
+elif [ "$UPDATE_MODE" = "true" ] && [ -f "$SUPPLEMENT_TAR" ]; then
+  if ! sha_matches "$SUPPLEMENT_TAR" "tbxt_data_supplement.tar.gz"; then
+    log "Drive supplement SHA changed — will re-extract"
+    need_supp_update="true"
+  fi
+fi
+
+if [ "$need_supp_update" = "false" ]; then
+  log "Pose supplement already up-to-date ($n_poses pose files present)"
+elif [ -f "$SUPPLEMENT_TAR" ]; then
+  log "Extracting pose supplement from local cache ($(du -h "$SUPPLEMENT_TAR" | cut -f1))..."
+  tar -xzf "$SUPPLEMENT_TAR" -C "$PROJECT_DIR"
+  log "  ✓ extracted $(ls "$PROJECT_DIR/data/full_pool_gnina_F/poses" | wc -l) poses"
+elif [ -n "$ID_SUPPLEMENT" ]; then
+  log "Downloading pose supplement from Drive..."
+  drive_dl "$ID_SUPPLEMENT" "$DOWNLOAD_CACHE/tbxt_data_supplement.tar.gz"
+  tar -xzf "$DOWNLOAD_CACHE/tbxt_data_supplement.tar.gz" -C "$PROJECT_DIR"
+  log "  ✓ extracted $(ls "$PROJECT_DIR/data/full_pool_gnina_F/poses" | wc -l) poses"
+else
+  log "WARN: pose supplement not available — task5/6/8/9 will fail until poses are generated."
+  log "      Run task2 first to regenerate poses, or set ID_SUPPLEMENT in setup.sh."
 fi
 
 # ─── Step 5b: post-install env patches ─────────────────────────────────────
