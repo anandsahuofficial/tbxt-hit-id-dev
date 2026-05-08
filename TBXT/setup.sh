@@ -147,24 +147,49 @@ else
 fi
 
 # ─── Step 5b: post-install env patches ─────────────────────────────────────
-# Older Drive bundles ship torchvision==0.24.1 (CUDA wheel) which is ABI-broken
-# against torch 2.8.0 (CPU). Replace it with the matching CPU wheel so Boltz-2
-# (task4) and OpenFF (task5) imports succeed. Idempotent — verifies the import
-# first and only patches if it fails. Safe to re-run; no-op once fixed.
-log "Verifying torchvision/openff imports..."
+# Older Drive bundles ship torchvision==0.24.1 (CUDA wheel) ABI-broken against
+# torch 2.8.0 (CPU). The new bundle (post 2026-05-08) ships matched wheels,
+# but this step is idempotent: it verifies imports + auto-installs the right
+# variant for your hardware (CUDA 12.8 if NVIDIA GPU detected, else CPU).
+log "Verifying torch/torchvision/openff imports..."
 set +u
 source "$CONDA_DIR/etc/profile.d/conda.sh"; conda activate "$ENV_NAME"
+
+# Detect GPU
+has_gpu="false"
+if command -v nvidia-smi >/dev/null && nvidia-smi >/dev/null 2>&1; then
+  has_gpu="true"
+fi
+
+# Check if imports work + cuda matches hardware
+needs_patch="false"
 if ! python -c "import torchvision; from openff.toolkit import Molecule" 2>/dev/null; then
-  log "  Patching torchvision (replacing broken CUDA wheel with 0.23.0+cpu)..."
-  pip install --quiet --force-reinstall --no-deps "torchvision==0.23.0" \
-    --index-url https://download.pytorch.org/whl/cpu
+  needs_patch="true"
+elif [ "$has_gpu" = "true" ] && ! python -c "import torch; assert torch.cuda.is_available()" 2>/dev/null; then
+  needs_patch="true"
+  log "  Hardware has GPU but torch is CPU-only — upgrading to CUDA 12.8"
+fi
+
+if [ "$needs_patch" = "true" ]; then
+  if [ "$has_gpu" = "true" ]; then
+    log "  Installing torch==2.8.0+cu128 + torchvision==0.23.0+cu128 (GPU)..."
+    pip install --quiet --force-reinstall --no-deps "torch==2.8.0" "torchvision==0.23.0" \
+      --index-url https://download.pytorch.org/whl/cu128
+  else
+    log "  Installing torch==2.8.0+cpu + torchvision==0.23.0+cpu (CPU)..."
+    pip install --quiet --force-reinstall --no-deps "torch==2.8.0" "torchvision==0.23.0" \
+      --index-url https://download.pytorch.org/whl/cpu
+  fi
   if python -c "import torchvision; from openff.toolkit import Molecule" 2>/dev/null; then
     log "  ✓ torchvision/openff imports OK"
+    if [ "$has_gpu" = "true" ]; then
+      python -c "import torch; print(f'  ✓ torch.cuda.is_available() = {torch.cuda.is_available()}, device = {torch.cuda.get_device_name(0) if torch.cuda.is_available() else \"none\"}')"
+    fi
   else
     log "  ⚠ patch did not fully resolve imports — see report below"
   fi
 else
-  log "  ✓ torchvision/openff imports already OK (no patch needed)"
+  log "  ✓ torch/torchvision/openff imports already OK (no patch needed)"
 fi
 set -u
 
