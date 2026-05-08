@@ -50,9 +50,9 @@ else
     log_warn "  See data/mmgbsa/MMGBSA_STATUS.md for the fix description."
 fi
 
-# pose-dir defaults to validation_F_gnina if available
-POSE_DIR="$TBXT_ROOT/data/dock/validation_F_gnina/poses"
-[ -d "$POSE_DIR" ] || POSE_DIR="$TBXT_ROOT/data/full_pool_gnina_F/poses"
+# pose-dir prefers full_pool_gnina_F (has 570 docked poses); falls back to validation
+POSE_DIR="$TBXT_ROOT/data/full_pool_gnina_F/poses"
+[ -d "$POSE_DIR" ] || POSE_DIR="$TBXT_ROOT/data/dock/validation_F_gnina/poses"
 
 run_python "$SCRIPT" \
     --smiles-csv "$INPUT_CSV" \

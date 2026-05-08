@@ -20,14 +20,16 @@ _begin
 
 PARALOG_DIR="$TBXT_ROOT/data/selectivity/receptors/prepped"
 TBXT_RECEPTOR="$TBXT_ROOT/data/dock/receptor/6F59_apo.pdbqt"
+SELECTIVITY_MATRIX="$TBXT_ROOT/data/selectivity/site_F_residue_matrix.csv"
 
-if [ ! -d "$PARALOG_DIR" ] || [ -z "$(ls -A "$PARALOG_DIR" 2>/dev/null)" ]; then
-    log_warn "Paralog receptor PDBQTs not found at $PARALOG_DIR"
-    log_warn "  This task needs prepped paralog receptors. The Task 6 owner is expected to"
-    log_warn "  pull TBR1 (6JG2), TBX2 (5HKR), TBX21 (1H6F) and run prep_receptor logic"
-    log_warn "  on each. See dashboard/06_selectivity_dock.md."
+# Sequence-aware selectivity scoring uses the precomputed paralog residue
+# matrix (data/selectivity/site_F_residue_matrix.csv) — no paralog receptor
+# PDBQTs needed. The structural-docking variant is a strict superset; if
+# paralog PDBQTs are present, scripts/team/dock_selectivity.py prefers them.
+if [ ! -f "$SELECTIVITY_MATRIX" ]; then
+    log_warn "Selectivity matrix missing at $SELECTIVITY_MATRIX"
     EXTRAS="$DATA_DIR/_extras.json"
-    python -c "import json; json.dump({'status_detail': 'paralog_receptors_missing', 'expected_dir': '$PARALOG_DIR'}, open('$EXTRAS','w'), indent=2)"
+    python -c "import json; json.dump({'status_detail': 'selectivity_matrix_missing'}, open('$EXTRAS','w'), indent=2)"
     _end PARTIAL "$EXTRAS"
     exit 0
 fi
@@ -48,48 +50,43 @@ else
     log_info "PRODUCTION: top 20 × paralogs at exh 8"
 fi
 
-# The selectivity-dock script (scripts/team/dock_selectivity.py) is the
-# expected name; if not present, the Task 6 owner writes it. We check.
 SCRIPT="$TBXT_ROOT/scripts/team/dock_selectivity.py"
-if [ ! -f "$SCRIPT" ]; then
-    log_warn "scripts/team/dock_selectivity.py not yet written by Task 6 owner."
-    log_warn "Falling back to docking each paralog individually with scripts/dock.py."
-    OUT_DIR="$DATA_DIR/dock_results"
-    mkdir -p "$OUT_DIR"
-    for paralog_pdbqt in "$PARALOG_DIR"/*.pdbqt; do
-        paralog_name=$(basename "$paralog_pdbqt" .pdbqt)
-        log_info "Docking against $paralog_name..."
-        # We'd need to override the receptor in dock.py — placeholder
-        log_warn "  (placeholder — full implementation requires Task 6 owner's script)"
-    done
-else
-    OUT_DIR="$DATA_DIR/dock_results"
-    mkdir -p "$OUT_DIR"
-    run_python "$SCRIPT" \
-        --smiles-csv "$INPUT_CSV" \
-        --paralog-receptor-dir "$PARALOG_DIR" \
-        --tbxt-receptor "$TBXT_RECEPTOR" \
-        --out-csv "$OUT_DIR/dock_offtarget.csv" \
-        --exhaustiveness "$EXHAUSTIVENESS" || { _end FAIL; exit 1; }
-fi
+OUT_DIR="$DATA_DIR/dock_results"
+mkdir -p "$OUT_DIR"
+run_python "$SCRIPT" \
+    --smiles-csv "$INPUT_CSV" \
+    --paralog-receptor-dir "$PARALOG_DIR" \
+    --tbxt-receptor "$TBXT_RECEPTOR" \
+    --out-csv "$OUT_DIR/dock_offtarget.csv" \
+    --exhaustiveness "$EXHAUSTIVENESS" || { _end FAIL; exit 1; }
 
 EXTRAS="$DATA_DIR/_extras.json"
 RESULTS_CSV="$OUT_DIR/dock_offtarget.csv"
 python - "$EXTRAS" "$RESULTS_CSV" "$INPUT_CSV" <<'PYEOF'
-import csv, json, sys, os, statistics
+import csv, json, sys, os
 out, csv_path, input_csv = sys.argv[1:]
+NUMERIC = {"n_total_contacts", "n_site_F_contacts", "selectivity_score",
+           "selectivity_TBX5", "selectivity_TBX21", "selectivity_kcal_min"}
 rows = []
 n_input = sum(1 for _ in open(input_csv)) - 1
 if os.path.exists(csv_path):
     for r in csv.DictReader(open(csv_path)):
-        rows.append({k: (float(v) if v not in ("", None) and k != "id" and k != "smiles" else v)
-                     for k, v in r.items()})
+        out_row = {}
+        for k, v in r.items():
+            if k in NUMERIC and v not in ("", None):
+                try: out_row[k] = float(v)
+                except ValueError: out_row[k] = v
+            else:
+                out_row[k] = v
+        rows.append(out_row)
 data = {
     "n_input": n_input,
     "processed": {"n_ok": len(rows)},
     "all_results": rows,
+    "top_50_ids": [r["id"] for r in sorted(rows, key=lambda r: -float(r.get("selectivity_score", 0) or 0))[:50]],
     "summary_stats": {
-        "n_with_selectivity_gap": sum(1 for r in rows if r.get("selectivity_kcal_min", 0) and r["selectivity_kcal_min"] >= 1.0),
+        "n_highly_selective": sum(1 for r in rows if (r.get("selectivity_score") or 0) >= 0.5),
+        "mean_selectivity":   round(sum(float(r.get("selectivity_score") or 0) for r in rows) / len(rows), 3) if rows else 0,
     } if rows else {},
 }
 json.dump(data, open(out, "w"), indent=2)

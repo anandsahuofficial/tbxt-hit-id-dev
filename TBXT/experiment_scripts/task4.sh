@@ -20,10 +20,12 @@ export CXX="${CXX:-${CONDA_PREFIX}/bin/g++}"
 NVRTC_LIB="$CONDA_PREFIX/lib/python3.12/site-packages/nvidia/cu13/lib"
 [ -d "$NVRTC_LIB" ] && export LD_LIBRARY_PATH="$NVRTC_LIB:$LD_LIBRARY_PATH"
 
+FAST_FLAG=""
 if [ "$TEST_MODE" = "true" ]; then
     INPUT_CSV="$DATA_DIR/_test_input.csv"
     head -2 "$TBXT_ROOT/data/full_pool_input.csv" > "$INPUT_CSV"
-    log_info "TEST MODE: 1 compound"
+    FAST_FLAG="--fast"
+    log_info "TEST MODE: 1 compound, --fast (1 sample × 25 steps)"
 else
     INPUT_CSV="$TBXT_ROOT/data/full_pool_input.csv"
     log_info "PRODUCTION: $(wc -l < "$INPUT_CSV") compounds"
@@ -34,7 +36,7 @@ mkdir -p "$OUT_DIR"
 
 run_python "$TBXT_ROOT/scripts/run_boltz.py" \
     --smiles-csv "$INPUT_CSV" \
-    --out-dir "$OUT_DIR" || { _end FAIL; exit 1; }
+    --out-dir "$OUT_DIR" $FAST_FLAG || { _end FAIL; exit 1; }
 
 # Boltz writes its summary to data/boltz/boltz_summary.csv (legacy path);
 # move/copy into our trial dir for shareable JSON

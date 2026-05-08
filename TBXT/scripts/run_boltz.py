@@ -52,22 +52,39 @@ def write_yaml(cid, smiles):
     return path
 
 
-def run_boltz(yaml_path, out_dir):
+def _detect_accelerator():
+    try:
+        import torch
+        return ("gpu", "1") if torch.cuda.is_available() else ("cpu", "1")
+    except Exception:
+        return ("cpu", "1")
+
+
+def run_boltz(yaml_path, out_dir, fast=False):
+    accelerator, devices = _detect_accelerator()
+    safeload = Path(__file__).resolve().parent / "_boltz_safeload.py"
+    # Fast mode reduces samples + sampling steps for smoke-test on CPU.
+    diffusion = "1" if fast else "3"
+    recycling = "1" if fast else "3"
+    sampling  = "25" if fast else "200"
+    timeout   = 600 if fast else 1800
     cmd = [
-        "boltz", "predict", str(yaml_path),
+        sys.executable, str(safeload), "predict", str(yaml_path),
         "--out_dir", str(out_dir),
-        "--accelerator", "gpu",
-        "--devices", "1",
-        "--diffusion_samples", "3",          # 3 diffusion samples per ligand (more = better but slower)
-        "--recycling_steps", "3",
-        "--sampling_steps", "200",
+        "--accelerator", accelerator,
+        "--devices", devices,
+        "--diffusion_samples", diffusion,
+        "--recycling_steps", recycling,
+        "--sampling_steps", sampling,
         "--output_format", "pdb",
         "--write_full_pae",
         "--seed", "42",
         "--override",
     ]
-    print(f"  Running: {' '.join(cmd[:6])} ...")
-    rc = subprocess.run(cmd, capture_output=True, text=True, timeout=1800)
+    print(f"  Running: boltz predict {yaml_path.name} ... "
+          f"[accelerator={accelerator}, fast={fast}, samples={diffusion}, "
+          f"recycle={recycling}, sampling={sampling}]")
+    rc = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
     return rc
 
 
@@ -122,6 +139,8 @@ def main():
     p.add_argument("--smiles-csv", required=True)
     p.add_argument("--out-dir", default=str(BOLTZ_OUT / "runs"))
     p.add_argument("--limit", type=int, default=0)
+    p.add_argument("--fast", action="store_true",
+                   help="reduce samples/sampling steps for smoke-test on CPU")
     args = p.parse_args()
 
     rows = list(csv.DictReader(open(args.smiles_csv)))
@@ -139,7 +158,7 @@ def main():
         out_dir.mkdir(parents=True, exist_ok=True)
 
         t0 = time.time()
-        rc = run_boltz(yaml_path, out_dir)
+        rc = run_boltz(yaml_path, out_dir, fast=args.fast)
         elapsed = time.time() - t0
         if rc.returncode != 0:
             print(f"  FAIL ({elapsed:.0f}s):")
