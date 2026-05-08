@@ -290,9 +290,17 @@ if [ "$need_env_update" = "true" ]; then
   rm -rf "$ENV_DIR"
   mkdir -p "$ENV_DIR"
   tar -xzf "$DOWNLOAD_CACHE/tbxt_env.tar.gz" -C "$ENV_DIR"
-  # Activate and conda-unpack
+  # Activate via direct source. After conda-pack tar extraction, the env
+  # has its own bin/activate; before conda-unpack fixes paths, that's the
+  # only thing that works (the conda-base activate script can't see the
+  # not-yet-registered env). Falls back to the base activate after
+  # conda-unpack registers the env.
   set +u
-  source "$CONDA_DIR/etc/profile.d/conda.sh"; conda activate "$ENV_NAME"
+  if [ -f "$ENV_DIR/bin/activate" ]; then
+    source "$ENV_DIR/bin/activate"
+  elif [ -x "$CONDA_DIR/bin/activate" ]; then
+    source "$CONDA_DIR/bin/activate" "$ENV_NAME"
+  fi
   if command -v conda-unpack >/dev/null; then
     conda-unpack
   else
@@ -365,7 +373,11 @@ fi
 # for the host hardware (CUDA 12.8 if NVIDIA GPU detected, else CPU).
 log "Verifying torch/torchvision/openff imports..."
 set +u
-source "$CONDA_DIR/etc/profile.d/conda.sh"; conda activate "$ENV_NAME"
+if [ -d "$ENV_DIR" ] && [ -x "$CONDA_DIR/bin/activate" ]; then
+    source "$CONDA_DIR/bin/activate" "$ENV_NAME"
+elif [ -f "$ENV_DIR/bin/activate" ]; then
+    source "$ENV_DIR/bin/activate"
+fi
 
 # Detect GPU
 has_gpu="false"
@@ -408,10 +420,12 @@ set -u
 # ─── Step 6: verify ─────────────────────────────────────────────────────────
 log "Running setup_check.sh..."
 set +u
-source "$CONDA_DIR/etc/profile.d/conda.sh"; conda activate "$ENV_NAME"
+source "$ENV_DIR/bin/activate"
 set -u
 cd "$PROJECT_DIR"
-bash scripts/team/setup_check.sh
+# Pass project + conda paths so setup_check.sh doesn't fall back to $HOME defaults
+TBXT_PROJECT_DIR="$PROJECT_DIR" CONDA_DIR="$CONDA_DIR" ENV_NAME="$ENV_NAME" \
+    bash scripts/team/setup_check.sh
 
 # ─── Done ───────────────────────────────────────────────────────────────────
 cat <<EOF

@@ -15,16 +15,25 @@ set -euo pipefail
 _VARIANT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 TBXT_ROOT="${TBXT_ROOT:-$(cd "$_VARIANT_DIR/../.." && pwd)}"
 
-# Activate the conda env up-front so 'python' / 'gnina' / 'boltz' resolve.
-# Honors $CONDA_DIR if set (e.g., HPC submissions install conda to project
-# space at /projectnb/.../Hackathon/miniconda3 because /usr3/graduate is
+# Activate the conda env via direct `source $CONDA_DIR/bin/activate $ENV_NAME`
+# (no `conda activate <name>` — simpler, faster, no conda-hook dependency).
+# Works for both `conda create`d envs (no env-local bin/activate) and
+# conda-pack'd envs.
+# Honors $CONDA_DIR if set (HPC submissions install conda at project
+# space /projectnb/.../Hackathon/miniconda3 because /usr3/graduate is
 # quota-limited). Falls back to $HOME/miniconda3 for laptop installs.
 _VARIANT_CONDA_DIR="${CONDA_DIR:-$HOME/miniconda3}"
-if [ -f "$_VARIANT_CONDA_DIR/etc/profile.d/conda.sh" ]; then
+_VARIANT_ENV_NAME="${ENV_NAME:-tbxt}"
+_VARIANT_ENV_DIR="$_VARIANT_CONDA_DIR/envs/$_VARIANT_ENV_NAME"
+if [ -d "$_VARIANT_ENV_DIR" ] && [ -x "$_VARIANT_CONDA_DIR/bin/activate" ]; then
     set +u
-    source "$_VARIANT_CONDA_DIR/etc/profile.d/conda.sh"
-    conda activate tbxt 2>/dev/null || true
-    export LD_LIBRARY_PATH="$CONDA_PREFIX/lib:${LD_LIBRARY_PATH:-}"
+    source "$_VARIANT_CONDA_DIR/bin/activate" "$_VARIANT_ENV_NAME"
+    export LD_LIBRARY_PATH="$_VARIANT_ENV_DIR/lib:${LD_LIBRARY_PATH:-}"
+    set -u
+elif [ -f "$_VARIANT_ENV_DIR/bin/activate" ]; then
+    set +u
+    source "$_VARIANT_ENV_DIR/bin/activate"
+    export LD_LIBRARY_PATH="$_VARIANT_ENV_DIR/lib:${LD_LIBRARY_PATH:-}"
     set -u
 fi
 
