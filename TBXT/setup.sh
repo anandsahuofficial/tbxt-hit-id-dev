@@ -154,11 +154,6 @@ set -u
 cd "$PROJECT_DIR"
 bash scripts/team/setup_check.sh
 
-# ─── Step 7: smoke test ─────────────────────────────────────────────────────
-log "Running end-to-end smoke test..."
-export LD_LIBRARY_PATH="$ENV_DIR/lib:${LD_LIBRARY_PATH:-}"
-python tests/smoke_test.py
-
 # ─── Done ───────────────────────────────────────────────────────────────────
 cat <<EOF
 
@@ -168,19 +163,11 @@ cat <<EOF
   Project root:   $PROJECT_DIR
   Conda env:      $ENV_DIR
 
-  To activate the env in a new shell:
-    source $CONDA_DIR/etc/profile.d/conda.sh
-    conda activate $ENV_NAME
-
-  Now find your task assignment in:
-    $PROJECT_DIR/dashboard/MEMBERS.md
-
-  Then read your task brief at:
-    $PROJECT_DIR/dashboard/<NN>_<your_task>.md
-
-  Need to run any script:
+  Next step — verify the install end-to-end:
     cd $PROJECT_DIR
-    export LD_LIBRARY_PATH=\$CONDA_PREFIX/lib:\$LD_LIBRARY_PATH
-    python scripts/<script>.py
+    bash smoke_test.sh
+
+  Then find your task assignment:
+    cat $PROJECT_DIR/dashboard/MEMBERS.md
 ================================================================================
 EOF
