@@ -107,5 +107,8 @@ TBXT/data/selectivity/site_A_residue_matrix.csv
 # Smoke test outputs (generated each run by tests/smoke_test.py)
 TBXT/tests/smoke_out/
 
+# Local Drive bundle backup (11 GB — never push to git, also never delete until event over)
+TBXT/tbxt_drive_local/
+
 # ─── Files we DO want in git (overrides above with explicit !) ─────────────
 # (None currently — keep this section in case we need it later)
