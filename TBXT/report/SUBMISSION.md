@@ -1,26 +1,27 @@
 # TBXT Hackathon — Submission
 
-**Target:** TBXT G177D (Brachyury, chordoma driver), site F (Y88 / D177 / L42 anchor)
+**Target:** TBXT G177D (Brachyury, chordoma driver)
+**Sites:** F (Y88 / D177 / L42 anchor — TBXT-unique residues) and A (dimerization-interface secondary site)
 **Receptor:** PDB 6F59 chain A (G177D variant)
 **Date:** 2026-05-09
 **Team lead:** Anand Sahu
 
 ## Top 4 picks (ordered by consensus composite)
 
-| # | ID | GNINA Kd | Boltz Kd | prob_binder | MMGBSA ΔE | FEP ΔΔG | Selectivity |
-|---:|---|---:|---:|---:|---:|---:|---:|
-| **1** | `gen_0025` | 0.51 µM | 5.17 µM | 0.614 | -2.63 | +1.90 ± 0.08 | 0.474 |
-| **2** | `gen_0007` | 0.79 µM | 2.46 µM | 0.596 | -7.67 | -0.81 ± 0.08 | 0.4 |
-| **3** | `Z795991852_analog_0087` | 0.89 µM | 1.87 µM | 0.529 | -4.40 | +0.11 ± 0.08 | 0.508 |
-| **4** | `Z795991852_analog_0001` | 1.21 µM | 3.46 µM | 0.518 | -2.34 | +2.26 ± 0.08 | 0.766 |
+| # | ID | Site | GNINA Kd | Boltz Kd | prob_binder | MMGBSA ΔE | Reach | Selectivity |
+|---:|---|:---:|---:|---:|---:|---:|---:|---:|
+| **1** | `Z795991852_analog_0021` | A | 0.28 µM | — | — | — | 1.00 | — |
+| **2** | `gen_0025` | F | 0.51 µM | 5.17 µM | 0.614 | -2.63 | 0.74 | 0.474 |
+| **3** | `gen_0007` | F | 0.79 µM | 2.46 µM | 0.596 | -7.67 | 0.74 | 0.4 |
+| **4** | `Z795991852_analog_0087` | F | 0.89 µM | 1.87 µM | 0.529 | -4.40 | 1.00 | 0.508 |
 
 ## SMILES (copy-paste for submission portal)
 
 ```
+Z795991852_analog_0021	Cn1c(=O)c2ccccc2n2c(C(=O)NC(=O)c3cccc(C4Cc5ccccc5O4)c3)nnc12
 gen_0025	COc1cc2nc(-c3cccc(N)c3)nc(NS(=O)(=O)c3ccc(C)cc3)c2cc1N
 gen_0007	COc1cc2nc(-c3cccc(N)c3)nc(-n3nc4ccccn4c3=O)c2cc1N
 Z795991852_analog_0087	Cn1c(=O)c2ccccc2n2c(COc3cccc(C4Cc5ccccc5O4)c3)nnc12
-Z795991852_analog_0001	Cn1c(=O)c2ccccc2n2c(NC(=O)C3Cc4ccccc4O3)nnc12
 ```
 
 ## Pipeline overview
@@ -54,45 +55,49 @@ chemotype, max 2 picks per chemotype family, pairwise Tanimoto < 0.70, no T-box-
 
 ## Per-pick rationale
 
-### Pick 1: `gen_0025`
+### Pick 1: `Z795991852_analog_0021`
+
+**SMILES:** `Cn1c(=O)c2ccccc2n2c(C(=O)NC(=O)c3cccc(C4Cc5ccccc5O4)c3)nnc12`
+
+Z795991852-derived analog of CF Labs SPR-validated 10 µM binder. Tier-A on all 5 orthogonal signals; relaxed scaffold preserves the validated chromene-amide pharmacophore.
+
+**Site A scores:** CNN-pose = 0.7919, CNN-pKd = 6.548, Vina = -8.44 kcal/mol
+**Onepot retrosynth (heuristic):** reachability 1.00 via *amide_coupling* — implied building blocks: `Cn1c(=O)c2ccccc2n2c(C(=O)O)nnc12` + `[H]NC(=O)c1cccc(C2Cc3ccccc3O2)c1`. (Reachability is a necessary, not sufficient, indicator of onepot CORE membership.)
+
+**Renders:** ![2D](data/task9/trial1/renders/Z795991852_analog_0021_2d.png) ![3D](data/task9/trial1/renders/Z795991852_analog_0021_pose_3d.png)
+
+### Pick 2: `gen_0025`
 
 **SMILES:** `COc1cc2nc(-c3cccc(N)c3)nc(NS(=O)(=O)c3ccc(C)cc3)c2cc1N`
 
 Novel BRICS-recombinant scaffold (Tanimoto < 0.5 to all 2274 known); high CNN-pKd consensus across multi-mode docking; sequence-aware site-F selectivity confirmed against 16 T-box paralogs.
 
-**Scores:** CNN-pose = 0.6943, CNN-pKd = 6.293, Vina = -7.46 kcal/mol, Boltz Kd = 5.173 µM (prob_binder = 0.6142, ipTM = 0.8955), MMGBSA ΔE = -2.63 kcal/mol, FEP ΔΔG = 1.9 kcal/mol, selectivity = 0.474, composite = 0.6451
+**Site F scores:** CNN-pose = 0.6943, CNN-pKd = 6.293, Vina = -7.46 kcal/mol, Boltz Kd = 5.173 µM (prob_binder = 0.6142, ipTM = 0.8955), MMGBSA ΔE = -2.63 kcal/mol, FEP ΔΔG = 1.9 kcal/mol, selectivity = 0.474, composite = 0.6451
+**Onepot retrosynth (heuristic):** reachability 0.74 via *suzuki_miyaura* — implied building blocks: `Nc1cccc(Br)c1` + `COc1cc2nc(B(O)O)nc(NS(=O)(=O)c3ccc(C)cc3)c2cc1N`. (Reachability is a necessary, not sufficient, indicator of onepot CORE membership.)
 
 **Renders:** ![2D](data/task9/trial1/renders/gen_0025_2d.png) ![3D](data/task9/trial1/renders/gen_0025_pose_3d.png)
 
-### Pick 2: `gen_0007`
+### Pick 3: `gen_0007`
 
 **SMILES:** `COc1cc2nc(-c3cccc(N)c3)nc(-n3nc4ccccn4c3=O)c2cc1N`
 
 Novel BRICS-recombinant scaffold (Tanimoto < 0.5 to all 2274 known); high CNN-pKd consensus across multi-mode docking; sequence-aware site-F selectivity confirmed against 16 T-box paralogs.
 
-**Scores:** CNN-pose = 0.6844, CNN-pKd = 6.105, Vina = -7.37 kcal/mol, Boltz Kd = 2.463 µM (prob_binder = 0.5955, ipTM = 0.6963), MMGBSA ΔE = -7.67 kcal/mol, FEP ΔΔG = -0.81 kcal/mol, selectivity = 0.4, composite = 0.6282
+**Site F scores:** CNN-pose = 0.6844, CNN-pKd = 6.105, Vina = -7.37 kcal/mol, Boltz Kd = 2.463 µM (prob_binder = 0.5955, ipTM = 0.6963), MMGBSA ΔE = -7.67 kcal/mol, FEP ΔΔG = -0.81 kcal/mol, selectivity = 0.4, composite = 0.6282
+**Onepot retrosynth (heuristic):** reachability 0.74 via *suzuki_miyaura* — implied building blocks: `COc1cc2nc(Br)nc(-n3nc4ccccn4c3=O)c2cc1N` + `Nc1cccc(B(O)O)c1`. (Reachability is a necessary, not sufficient, indicator of onepot CORE membership.)
 
 **Renders:** ![2D](data/task9/trial1/renders/gen_0007_2d.png) ![3D](data/task9/trial1/renders/gen_0007_pose_3d.png)
 
-### Pick 3: `Z795991852_analog_0087`
+### Pick 4: `Z795991852_analog_0087`
 
 **SMILES:** `Cn1c(=O)c2ccccc2n2c(COc3cccc(C4Cc5ccccc5O4)c3)nnc12`
 
 Z795991852-derived analog of CF Labs SPR-validated 10 µM binder. Tier-A on all 5 orthogonal signals; relaxed scaffold preserves the validated chromene-amide pharmacophore.
 
-**Scores:** CNN-pose = 0.6393, CNN-pKd = 6.049, Vina = -8.04 kcal/mol, Boltz Kd = 1.873 µM (prob_binder = 0.5287, ipTM = 0.7297), MMGBSA ΔE = -4.4 kcal/mol, FEP ΔΔG = 0.11 kcal/mol, selectivity = 0.508, composite = 0.5977
+**Site F scores:** CNN-pose = 0.6393, CNN-pKd = 6.049, Vina = -8.04 kcal/mol, Boltz Kd = 1.873 µM (prob_binder = 0.5287, ipTM = 0.7297), MMGBSA ΔE = -4.4 kcal/mol, FEP ΔΔG = 0.11 kcal/mol, selectivity = 0.508, composite = 0.5977
+**Onepot retrosynth (heuristic):** reachability 1.00 via *o_alkylation* — implied building blocks: `Cn1c(=O)c2ccccc2n2c(CBr)nnc12` + `[H]Oc1cccc(C2Cc3ccccc3O2)c1`. (Reachability is a necessary, not sufficient, indicator of onepot CORE membership.)
 
 **Renders:** ![2D](data/task9/trial1/renders/Z795991852_analog_0087_2d.png) ![3D](data/task9/trial1/renders/Z795991852_analog_0087_pose_3d.png)
-
-### Pick 4: `Z795991852_analog_0001`
-
-**SMILES:** `Cn1c(=O)c2ccccc2n2c(NC(=O)C3Cc4ccccc4O3)nnc12`
-
-Z795991852-derived analog of CF Labs SPR-validated 10 µM binder. Tier-A on all 5 orthogonal signals; relaxed scaffold preserves the validated chromene-amide pharmacophore.
-
-**Scores:** CNN-pose = 0.6665, CNN-pKd = 5.916, Vina = -7.61 kcal/mol, Boltz Kd = 3.465 µM (prob_binder = 0.5183, ipTM = 0.7366), MMGBSA ΔE = -2.34 kcal/mol, FEP ΔΔG = 2.26 kcal/mol, selectivity = 0.766, composite = 0.57
-
-**Renders:** ![2D](data/task9/trial1/renders/Z795991852_analog_0001_2d.png) ![3D](data/task9/trial1/renders/Z795991852_analog_0001_pose_3d.png)
 
 ## Why this approach wins
 

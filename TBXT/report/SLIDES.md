@@ -59,16 +59,19 @@ TEP recommends site F + site A. We focused on F because:
 
 ---
 
-## Final 4 picks
+## Final 4 picks (site-diverse: 3F + 1A)
 
-| # | ID | GNINA Kd | Boltz Kd | prob_binder | MMGBSA ΔE | FEP ΔΔG vs ref | Selectivity |
-|---:|---|---:|---:|---:|---:|---:|---:|
-| **1** | `gen_0025` | 0.51 µM | 5.17 µM | 0.61 | -2.63 | +1.90 | 0.47 |
-| **2** | `gen_0007` | 0.79 µM | 2.46 µM | 0.60 | **-7.67** | **-0.81** ✓ | 0.40 |
-| **3** | `Z795991852_analog_0087` | 0.89 µM | **1.87 µM** | 0.53 | -4.40 | +0.11 | 0.51 |
-| **4** | `Z795991852_analog_0001` | 1.21 µM | 3.46 µM | 0.52 | -2.34 | +2.26 | **0.77** |
+| # | ID | Site | GNINA Kd | Boltz Kd | prob_binder | MMGBSA ΔE | Reach | Selectivity |
+|---:|---|:---:|---:|---:|---:|---:|---:|---:|
+| **1** | `Z795991852_analog_0021` | A | **0.28 µM** | — | — | — | **1.00** | — |
+| **2** | `gen_0025` | F | 0.51 µM | 5.17 µM | 0.61 | -2.63 | 0.74 | 0.47 |
+| **3** | `gen_0007` | F | 0.79 µM | 2.46 µM | 0.60 | **-7.67** | 0.74 | 0.40 |
+| **4** | `Z795991852_analog_0087` | F | 0.89 µM | **1.87 µM** | 0.53 | -4.40 | **1.00** | 0.51 |
 
-Pairwise Tanimoto < 0.55. All Tier-A on multi-mode docking. All Boltz-confirmed binders (prob ≥ 0.52). All MMGBSA-favorable (ΔE between -2.34 and -7.67 kcal/mol).
+- **2 sites** (3 site-F + 1 site-A) per organizer's recommended composition
+- **2 chemotypes** (2 novel BRICS-recombinant + 2 Z795991852-derived)
+- **Pairwise Tanimoto < 0.55** between any two picks
+- **Reach** = onepot 7-reaction retrosynthesis score (per arXiv:2601.12603 methodology). 1.00 = clean 1-step disconnection via amide / Suzuki / Buchwald / urea / thiourea / N-alkyl / O-alkyl with plausible commercial building blocks. *Heuristic — necessary but not sufficient for CORE membership.*
 
 ---
 
@@ -112,16 +115,16 @@ Tractability anchor: shares synthesis path with the validated parent.
 
 ---
 
-## Pick 4: Z795991852_analog_0001 — selectivity champion
+## Pick 4: Z795991852_analog_0021 — site-A diversification
 
-**SMILES:** `Cn1c(=O)c2ccccc2n2c(NC(=O)C3Cc4ccccc4O3)nnc12`
+**SMILES:** `Cn1c(=O)c2ccccc2n2c(C(=O)NC(=O)c3cccc(C4Cc5ccccc5O4)c3)nnc12`
 
-- **Highest selectivity score in top picks (0.77)** — all contacts on TBXT-unique residues
-- Boltz prob_binder 0.52, Kd 3.5 µM
-- MMGBSA ΔE = -2.34 kcal/mol
-- Direct -CO-NH- linker (amide, in onepot's listed 7 reactions)
+- **Picked at site A** (dimerization-interface secondary pocket) — single-site bet hedge
+- **Site-A predicted Kd = 0.28 µM** (CNN pose 0.79, pKd 6.55, Vina −8.44 kcal/mol)
+- **Onepot reachability score 1.00** via amide coupling — same disconnection pattern as the validated parent Z795991852
+- Implied building blocks: chromene-2-carboxylic acid + amino-quinazolinone-triazole
 
-Chosen as the **off-target-risk hedge**: even if our affinity predictions are off by 5×, this pick is least likely to bind T-box paralogs.
+Chosen for **site-diversity** (organizer's recommended 2F + 1A + 1 wildcard composition) and **synthesis tractability** (clean amide-coupling disconnection, the most common reaction in onepot CORE).
 
 ---
 
