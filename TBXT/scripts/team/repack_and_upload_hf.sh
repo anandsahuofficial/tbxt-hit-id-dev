@@ -40,12 +40,21 @@ log()  { printf "\n[\033[36mrepack\033[0m %s] %s\n" "$(date +%H:%M:%S)" "$*"; }
 err()  { printf "\n[\033[31mERROR\033[0m] %s\n" "$*" >&2; exit 1; }
 
 # ─── Pre-flight ────────────────────────────────────────────────────────────
-command -v conda-pack >/dev/null \
-  || err "conda-pack not found. Install: conda install -n base -c conda-forge conda-pack"
 command -v git >/dev/null \
   || err "git not found"
 command -v git-lfs >/dev/null \
   || err "git-lfs not found. Install (Debian/WSL): sudo apt-get install -y git-lfs"
+if [ "$REBUILD_ENV" = "true" ]; then
+  if ! command -v conda-pack >/dev/null; then
+    # Try sourcing base conda; conda-pack is typically there
+    if [ -f "$HOME/miniconda3/etc/profile.d/conda.sh" ]; then
+      source "$HOME/miniconda3/etc/profile.d/conda.sh" 2>/dev/null || true
+      conda activate base 2>/dev/null || true
+    fi
+  fi
+  command -v conda-pack >/dev/null \
+    || err "conda-pack not found. Install: conda install -n base -c conda-forge conda-pack  (or run with --no-env if you don't need to repack)"
+fi
 
 # ─── Step 0: ensure the HF repo is cloned locally via SSH ───────────────────
 if [ ! -d "$HF_LOCAL_CLONE/.git" ]; then
@@ -68,6 +77,30 @@ fi
     fi
 } )
 
+# HF caps single LFS files at 5 GB unless the repo is configured for large
+# files via 'hf lfs-enable-largefiles'. This is a local git config change
+# (multipart transfer agent), no network/auth. Idempotent.
+if ! grep -q "lfs-multipart-upload" "$HF_LOCAL_CLONE/.git/config" 2>/dev/null; then
+  if command -v hf >/dev/null; then
+    log "Enabling HF large-file (>5 GB) support on the local clone"
+    hf lfs-enable-largefiles "$HF_LOCAL_CLONE" >/dev/null
+  else
+    log "WARN: 'hf' CLI not found. Files >5 GB will fail to push."
+    log "      Install once:  pip install huggingface_hub"
+    log "      Then re-run this script."
+  fi
+fi
+
+# Stage existing bundles from the legacy local cache (do this BEFORE the env
+# check so --no-env can find a previously-staged or legacy-cache copy).
+LEGACY_CACHE="$TBXT_ROOT/tbxt_drive_local"
+for f in tbxt_env.tar.gz tbxt_data_bundle.tar.gz tbxt_data_supplement.tar.gz; do
+  if [ ! -f "$HF_LOCAL_CLONE/$f" ] && [ -f "$LEGACY_CACHE/$f" ]; then
+    log "Staging $f from legacy cache ($(du -h "$LEGACY_CACHE/$f" | cut -f1))"
+    cp "$LEGACY_CACHE/$f" "$HF_LOCAL_CLONE/$f"
+  fi
+done
+
 # ─── Step 1: repack the tbxt env ───────────────────────────────────────────
 if [ "$REBUILD_ENV" = "true" ]; then
   log "Repacking tbxt env -> $HF_LOCAL_CLONE/tbxt_env.tar.gz (~5-10 min)"
@@ -81,15 +114,6 @@ else
   [ -f "$HF_LOCAL_CLONE/tbxt_env.tar.gz" ] \
     || err "No existing env tarball at $HF_LOCAL_CLONE/tbxt_env.tar.gz; remove --no-env or stage one first"
 fi
-
-# Stage data bundle and supplement from the legacy local cache (if not already in clone)
-LEGACY_CACHE="$TBXT_ROOT/tbxt_drive_local"
-for f in tbxt_data_bundle.tar.gz tbxt_data_supplement.tar.gz; do
-  if [ ! -f "$HF_LOCAL_CLONE/$f" ] && [ -f "$LEGACY_CACHE/$f" ]; then
-    log "Staging $f from legacy cache"
-    cp "$LEGACY_CACHE/$f" "$HF_LOCAL_CLONE/$f"
-  fi
-done
 
 # ─── Step 2: rebuild supplement (poses + ligands) if requested ─────────────
 if [ "$REBUILD_SUPPLEMENT" = "true" ]; then
