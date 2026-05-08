@@ -48,8 +48,9 @@ fi
 # Run the consensus aggregator (signals merged from each task's all_results)
 OUT_CSV="$DATA_DIR/consensus_table.csv"
 RANKED_CSV="$DATA_DIR/tier_a_ranked.csv"
+TOP500_CSV="$DATA_DIR/top500_consensus_ranked.csv"
 
-python - "$REPORT_DIR_GLOB" "$TRIAL_TAG" "$OUT_CSV" "$RANKED_CSV" <<'PYEOF'
+python - "$REPORT_DIR_GLOB" "$TRIAL_TAG" "$OUT_CSV" "$RANKED_CSV" "$TOP500_CSV" <<'PYEOF'
 """
 Aggregate per-task JSONs into a composite consensus ranking.
 Supports partial inputs: signals from missing tasks are skipped (with notes).
@@ -57,7 +58,7 @@ Supports partial inputs: signals from missing tasks are skipped (with notes).
 import csv, json, os, sys
 from pathlib import Path
 
-report_dir, trial_tag, out_csv, ranked_csv = sys.argv[1:]
+report_dir, trial_tag, out_csv, ranked_csv, top500_csv = sys.argv[1:]
 report_dir = Path(report_dir)
 
 # Map: task_id → handler that extracts {id: {signals…}} from the JSON
@@ -203,6 +204,21 @@ with open(ranked_csv, "w", newline="") as f:
         w.writerow([cid, round(composite(s), 4), True] +
                    [s.get(k, "") for k in all_keys])
 
+# Top 500 consensus-ranked (the on-day Onepot filter input).
+# We want a LARGE pool so when on-day Onepot membership filter runs,
+# enough candidates survive to give us our final 4-pick from in-library compounds.
+top_n = min(500, len(ranked))
+top500 = ranked[:top_n]
+with open(top500_csv, "w", newline="") as f:
+    w = csv.writer(f)
+    # Add 'rank' column for clarity
+    w.writerow(["rank"] + header)
+    for i, (cid, s) in enumerate(top500, 1):
+        w.writerow([i, cid, round(composite(s), 4), passes_tier_a(s)] +
+                   [s.get(k, "") for k in all_keys])
+print(f"\n  Wrote top-{top_n} consensus-ranked → {top500_csv}")
+print(f"  (use as input to on-day onepot_filter.py)")
+
 # Print top 10
 print(f"\n  Top 10 Tier-A by composite score:")
 print(f"  {'id':30s}  {'composite':>9}  {'cnn_pose_F':>10}  {'cnn_pkd_F':>9}  {'vina_F':>6}")
@@ -220,7 +236,11 @@ with open(out_csv.replace(".csv", "_meta.json"), "w") as fout:
         "tasks_missing": tasks_missing,
         "n_compounds_with_signals": len(all_signals),
         "n_tier_a_pass": len(tier_a),
+        "top_500_ids": [cid for cid, s in top500],
         "top_50_tier_a_ids": [cid for cid, s in tier_a[:50]],
+        "top500_csv": top500_csv,
+        "ranked_csv": ranked_csv,
+        "consensus_csv": out_csv,
     }, fout, indent=2)
 PYEOF
 
