@@ -77,9 +77,11 @@ err() { printf "\n[\033[31mERROR\033[0m] %s\n" "$*" >&2; exit 1; }
 
 hf_dl() {
   # Downloads <filename> from the configured HF dataset repo.
-  # Args: <filename-on-hf> <local-out-path> [<expected_sha>]
+  # Args: <filename-on-hf> <local-out-path> [<expected_sha>] [<silent>]
   # Resumable. Idempotent if SHA matches.
-  local filename="$1"; local out="$2"; local expected_sha="${3:-}"
+  # If silent="silent", curl errors are routed to /dev/null (used for optional
+  # files where caller does '|| true' — avoids alarming users with 404 noise).
+  local filename="$1"; local out="$2"; local expected_sha="${3:-}"; local silent="${4:-}"
 
   # Detect a previously-cached HTML error page (e.g. 404 from a wrong path)
   # and delete it so we retry. HF normally returns binary; HTML means the
@@ -110,11 +112,21 @@ hf_dl() {
   fi
 
   if command -v curl >/dev/null; then
-    curl -L -C - -o "$out" "$url" --fail --retry 3 --retry-delay 5 "${auth_header[@]}"
+    if [ "$silent" = "silent" ]; then
+      curl -sL -C - -o "$out" "$url" --fail --retry 1 "${auth_header[@]}" 2>/dev/null \
+        || { rm -f "$out"; return 1; }
+    else
+      curl -L -C - -o "$out" "$url" --fail --retry 3 --retry-delay 5 "${auth_header[@]}"
+    fi
   elif command -v wget >/dev/null; then
     local wget_auth=()
     [ -n "$HF_TOKEN" ] && wget_auth=(--header="Authorization: Bearer ${HF_TOKEN}")
-    wget --continue -O "$out" "$url" "${wget_auth[@]}"
+    if [ "$silent" = "silent" ]; then
+      wget -q --continue -O "$out" "$url" "${wget_auth[@]}" \
+        || { rm -f "$out"; return 1; }
+    else
+      wget --continue -O "$out" "$url" "${wget_auth[@]}"
+    fi
   else
     err "Need either wget or curl to download files."
   fi
@@ -205,8 +217,9 @@ if [ "$UPDATE_MODE" = "true" ] || [ "$FORCE_MODE" = "true" ]; then
 fi
 
 hf_dl "CHECKSUMS.sha256"          "$DOWNLOAD_CACHE/CHECKSUMS.sha256"
-# MANIFEST is informational; HF version is optional, so download is best-effort
-hf_dl "MANIFEST_data_bundle.txt"  "$DOWNLOAD_CACHE/MANIFEST_data_bundle.txt" || true
+# MANIFEST is informational; treat as best-effort + silent so a missing
+# optional file doesn't alarm the user with curl 404 messages.
+hf_dl "MANIFEST_data_bundle.txt"  "$DOWNLOAD_CACHE/MANIFEST_data_bundle.txt" "" silent || true
 
 # Parse expected SHAs from CHECKSUMS.sha256 (format: "<hash>  <filename>")
 ENV_SHA=$(grep -E "tbxt_env\.tar\.gz$"          "$DOWNLOAD_CACHE/CHECKSUMS.sha256" | awk '{print $1}')
