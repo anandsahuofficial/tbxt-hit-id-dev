@@ -1,0 +1,16 @@
+# Site F
+center_x = 0.517
+center_y = -13.131
+center_z = -7.479
+size_x = 22.0
+size_y = 22.0
+size_z = 22.0
+
+# Site A
+center_x = -2.798
+center_y = -22.298
+center_z = -11.247
+size_x = 22.0
+size_y = 22.0
+size_z = 22.0
+

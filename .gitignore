@@ -1,16 +1,108 @@
-# Stray virtualenv
+# ─── Common ────────────────────────────────────────────────────────────────
 .venv/
-
-# Per-event directories are managed on dedicated branches, not master.
-# Branch-per-event keeps master clean.
-# Add specific event dirs here on master, then untrack them on the event branch.
-
-
-# Common ignores
 __pycache__/
 *.pyc
+.DS_Send
 .DS_Store
 *.swp
 .idea/
 .vscode/
 .ipynb_checkpoints/
+.claude/
+
+# ─── Other event branches ──────────────────────────────────────────────────
+# Per-event directories are managed on dedicated branches, not master.
+
+
+# ─── TBXT event: large files & raw / model / result data → Google Drive ────
+
+# GNINA binary (~2 GB)
+TBXT/bin/
+
+# Naar SPR raw + decrypted XLSX (180 MB raw + 180 MB decrypted)
+TBXT/data/naar/*.xlsx
+TBXT/data/naar/spr_decrypted/
+
+# Receptor PDBs / CIF / PDBQT (regeneratable from public PDB)
+TBXT/data/dock/receptor/*.cif
+TBXT/data/dock/receptor/*.pdb
+TBXT/data/dock/receptor/*.pdbqt
+TBXT/data/dock/receptor/ensemble/
+
+# Per-pose / per-ligand PDBQT files (huge; regeneratable)
+TBXT/data/**/poses/
+TBXT/data/**/ligands/
+
+# Boltz model intermediates + downloaded weights
+TBXT/data/boltz/runs/
+TBXT/data/boltz/yaml/
+
+# Snapshots
+TBXT/data/snapshots/
+
+# QSAR trained models + raw/derived datasets + predictions
+TBXT/data/qsar/*.pkl
+TBXT/data/qsar/*.json
+TBXT/data/qsar/naar_kd_*.csv
+TBXT/data/qsar/oof_predictions.csv
+TBXT/data/qsar/predictions_analogs.csv
+TBXT/data/qsar/cv_results.json
+
+# Docking results (regeneratable)
+TBXT/data/full_pool_gnina_F/
+TBXT/data/full_pool_gnina_F_multiseed/
+TBXT/data/full_pool_gnina_A/
+TBXT/data/full_pool_gnina_F.log
+TBXT/data/dock/validation_F/
+TBXT/data/dock/validation_A/
+TBXT/data/dock/validation_F_gnina/
+TBXT/data/dock/validation_A_gnina/
+TBXT/data/dock/ensemble_F/
+TBXT/data/dock/pose_contacts_summary.csv
+
+# Analog enumeration results
+TBXT/data/analogs/Z795991852_candidates.csv
+TBXT/data/analogs/FM*_candidates.csv
+TBXT/data/analogs/all_candidates.csv
+TBXT/data/analogs/smoke_test_*/
+TBXT/data/analogs/ensemble_smoke_F/
+
+# Boltz summary
+TBXT/data/boltz/boltz_summary.csv
+
+# Generative results
+TBXT/data/generative/generative_proposals.csv
+
+# MMGBSA (broken; regeneratable when fixed)
+TBXT/data/mmgbsa/*.pdb
+TBXT/data/mmgbsa/mmgbsa_summary.csv
+
+# Tier-A consensus results
+TBXT/data/tier_a/all_signals.csv
+TBXT/data/tier_a/tier_a_candidates.csv
+TBXT/data/tier_a/tier_b_candidates.csv
+
+# Other large derived data
+TBXT/data/prior_art_canonical.csv
+TBXT/data/naar/naar_smiles.csv
+TBXT/data/naar/naar_sheet_export.csv
+TBXT/data/naar/zenodo_meta.json
+TBXT/data/full_pool_input.csv
+TBXT/data/tep/tep_pdb_ligands_raw.json
+TBXT/data/tep/tep_fragments_full.csv
+
+# Small input/result CSVs (data — go to Drive)
+TBXT/data/dock/validation_input.csv
+TBXT/data/analogs/smoke_test_input.csv
+TBXT/data/dock/receptor/prep_log.txt
+TBXT/data/naar_high_sim_to_tep.csv
+TBXT/data/similarity_pairs.csv
+
+# Small results that are technically reference but easy to regenerate
+TBXT/data/selectivity/site_F_residue_matrix.csv
+TBXT/data/selectivity/site_A_residue_matrix.csv
+
+# Keep: FASTA sequences (public UniProt), grid_definitions (config), tep_fragments_table (small, public PDB derivation)
+
+# ─── Files we DO want in git (overrides above with explicit !) ─────────────
+# (None currently — keep this section in case we need it later)
