@@ -16,8 +16,8 @@ import sys
 import time
 from pathlib import Path
 
-DOCK = Path("/home/anandsahu/Hackathon/TBXT/data/dock")
-BOLTZ_OUT = Path("/home/anandsahu/Hackathon/TBXT/data/boltz")
+DOCK = Path(__file__).resolve().parents[1] / "data/dock"
+BOLTZ_OUT = Path(__file__).resolve().parents[1] / "data/boltz"
 BOLTZ_OUT.mkdir(exist_ok=True)
 (BOLTZ_OUT / "yaml").mkdir(exist_ok=True)
 (BOLTZ_OUT / "runs").mkdir(exist_ok=True)

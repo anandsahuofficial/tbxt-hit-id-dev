@@ -26,7 +26,7 @@ import csv
 import json
 from pathlib import Path
 
-DATA = Path("/home/anandsahu/Hackathon/TBXT/data")
+DATA = Path(__file__).resolve().parents[1] / "data"
 OUT = DATA / "tier_a"
 OUT.mkdir(exist_ok=True)
 

@@ -38,7 +38,7 @@ import xgboost as xgb
 
 RDLogger.DisableLog("rdApp.*")
 
-DATA = Path("/home/anandsahu/Hackathon/TBXT/data")
+DATA = Path(__file__).resolve().parents[1] / "data"
 QSAR_DIR = DATA / "qsar"
 OUT = DATA / "generative"
 OUT.mkdir(exist_ok=True)

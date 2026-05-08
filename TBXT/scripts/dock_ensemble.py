@@ -27,7 +27,7 @@ RDLogger.DisableLog("rdApp.*")
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 log = logging.getLogger("ensemble")
 
-DOCK = Path("/home/anandsahu/Hackathon/TBXT/data/dock")
+DOCK = Path(__file__).resolve().parents[1] / "data/dock"
 ENSEMBLE_DIR = DOCK / "receptor" / "ensemble"
 ENSEMBLE_META = ENSEMBLE_DIR / "ensemble_grids.json"
 

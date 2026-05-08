@@ -40,9 +40,9 @@ from rdkit.Chem import AllChem
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 log = logging.getLogger("mmgbsa")
 
-DOCK = Path("/home/anandsahu/Hackathon/TBXT/data/dock")
+DOCK = Path(__file__).resolve().parents[1] / "data/dock"
 APO_PDB = DOCK / "receptor" / "6F59_apo.pdb"
-OUT = Path("/home/anandsahu/Hackathon/TBXT/data/mmgbsa")
+OUT = Path(__file__).resolve().parents[1] / "data/mmgbsa"
 OUT.mkdir(exist_ok=True)
 
 

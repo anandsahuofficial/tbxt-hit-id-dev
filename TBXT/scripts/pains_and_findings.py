@@ -11,8 +11,8 @@ from rdkit.Chem.rdFingerprintGenerator import GetMorganGenerator
 
 RDLogger.DisableLog("rdApp.*")
 
-DATA = Path("/home/anandsahu/Hackathon/TBXT/data")
-SCRIPT = Path("/home/anandsahu/Hackathon/TBXT/scripts")
+DATA = Path(__file__).resolve().parents[1] / "data"
+SCRIPT = Path(__file__).resolve().parents[1] / "scripts"
 
 inv = list(csv.DictReader(open(DATA / "prior_art_canonical.csv")))
 

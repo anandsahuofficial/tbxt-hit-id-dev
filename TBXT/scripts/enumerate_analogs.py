@@ -38,7 +38,7 @@ RDLogger.DisableLog("rdApp.*")
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 log = logging.getLogger("analogs")
 
-DATA = Path("/home/anandsahu/Hackathon/TBXT/data")
+DATA = Path(__file__).resolve().parents[1] / "data"
 OUT = DATA / "analogs"
 OUT.mkdir(exist_ok=True)
 

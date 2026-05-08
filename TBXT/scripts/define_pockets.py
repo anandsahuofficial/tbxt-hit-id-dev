@@ -20,7 +20,7 @@ from pathlib import Path
 import numpy as np
 from Bio.PDB import PDBParser, Superimposer
 
-DOCK = Path("/home/anandsahu/Hackathon/TBXT/data/dock")
+DOCK = Path(__file__).resolve().parents[1] / "data/dock"
 RCPT = DOCK / "receptor"
 APO_PDB = RCPT / "6F59_apo.pdb"
 

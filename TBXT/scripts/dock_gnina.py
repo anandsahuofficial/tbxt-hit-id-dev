@@ -36,10 +36,10 @@ RDLogger.DisableLog("rdApp.*")
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 log = logging.getLogger("gnina")
 
-DOCK = Path("/home/anandsahu/Hackathon/TBXT/data/dock")
+DOCK = Path(__file__).resolve().parents[1] / "data/dock"
 RECEPTOR_PDBQT = DOCK / "receptor" / "6F59_apo.pdbqt"
 GRID_DEFS = DOCK / "grid_definitions.json"
-GNINA_BIN = Path("/home/anandsahu/Hackathon/TBXT/bin/gnina")
+GNINA_BIN = Path(__file__).resolve().parents[1] / "bin/gnina"
 
 CONDA_PREFIX = os.environ.get("CONDA_PREFIX", "/home/anandsahu/miniconda3/envs/tbxt")
 

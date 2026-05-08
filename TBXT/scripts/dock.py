@@ -31,7 +31,7 @@ RDLogger.DisableLog("rdApp.*")
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 log = logging.getLogger("dock")
 
-DOCK = Path("/home/anandsahu/Hackathon/TBXT/data/dock")
+DOCK = Path(__file__).resolve().parents[1] / "data/dock"
 RECEPTOR_PDBQT = DOCK / "receptor" / "6F59_apo.pdbqt"
 GRID_DEFS = DOCK / "grid_definitions.json"
 

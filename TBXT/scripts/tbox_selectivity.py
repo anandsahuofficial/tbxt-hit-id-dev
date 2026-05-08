@@ -13,7 +13,7 @@ from pathlib import Path
 from Bio import SeqIO
 from Bio.Align import PairwiseAligner
 
-DATA = Path("/home/anandsahu/Hackathon/TBXT/data/selectivity")
+DATA = Path(__file__).resolve().parents[1] / "data/selectivity"
 
 TBXT_DBD_START = 42  # 1-based, inclusive
 TBXT_DBD_END = 219   # 1-based, inclusive

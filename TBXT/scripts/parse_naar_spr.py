@@ -24,9 +24,9 @@ from pathlib import Path
 
 import openpyxl
 
-NAAR = Path("/home/anandsahu/Hackathon/TBXT/data/naar")
+NAAR = Path(__file__).resolve().parents[1] / "data/naar"
 SPR = NAAR / "spr_decrypted"
-QSAR = Path("/home/anandsahu/Hackathon/TBXT/data/qsar")
+QSAR = Path(__file__).resolve().parents[1] / "data/qsar"
 QSAR.mkdir(exist_ok=True)
 
 KD_MAX_M = 1e-2     # 10 mM cutoff (above = no binding)

@@ -12,7 +12,7 @@ from pathlib import Path
 import numpy as np
 from Bio.PDB import PDBParser
 
-DOCK = Path("/home/anandsahu/Hackathon/TBXT/data/dock")
+DOCK = Path(__file__).resolve().parents[1] / "data/dock"
 RECEPTOR = DOCK / "receptor" / "6F59_apo.pdb"
 CONTACT_CUTOFF = 4.0  # Å
 

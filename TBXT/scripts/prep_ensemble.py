@@ -24,7 +24,7 @@ from pdbfixer import PDBFixer
 from openmm.app import PDBFile
 from Bio.PDB import PDBParser, Select, PDBIO, Superimposer
 
-DOCK = Path("/home/anandsahu/Hackathon/TBXT/data/dock")
+DOCK = Path(__file__).resolve().parents[1] / "data/dock"
 RCPT = DOCK / "receptor"
 ENSEMBLE = RCPT / "ensemble"
 ENSEMBLE.mkdir(parents=True, exist_ok=True)

@@ -45,7 +45,7 @@ import xgboost as xgb
 
 RDLogger.DisableLog("rdApp.*")
 
-DATA = Path("/home/anandsahu/Hackathon/TBXT/data")
+DATA = Path(__file__).resolve().parents[1] / "data"
 QSAR = DATA / "qsar"
 
 # Outlier handling: drop compounds with absurd pKd (>= 7 = sub-100nM, unrealistic for this target)

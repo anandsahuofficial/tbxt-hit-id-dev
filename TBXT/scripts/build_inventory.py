@@ -20,7 +20,7 @@ from rdkit.Chem import AllChem, Descriptors, Lipinski, rdMolDescriptors
 
 RDLogger.DisableLog("rdApp.*")  # silence valence warnings on raw inputs
 
-DATA = Path("/home/anandsahu/Hackathon/TBXT/data")
+DATA = Path(__file__).resolve().parents[1] / "data"
 OUT = DATA
 
 CF_HITS = {
