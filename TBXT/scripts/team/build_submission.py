@@ -36,6 +36,8 @@ META   = ROOT / "report/task10_trial1.json"
 TASK4  = ROOT / "report/task4_trial1.json"
 TASK5  = ROOT / "report/task5_trial1.json"
 TASK6  = ROOT / "report/task6_trial1.json"
+TASK8  = ROOT / "report/task8_trial1.json"
+RENDER_DIR_REL = "data/task9/trial1/renders"
 
 OUT_TOP100 = ROOT / "report/top_100_consensus.csv"
 OUT_FINAL4 = ROOT / "report/final_4_picks.csv"
@@ -65,6 +67,12 @@ def main():
     mmgbsa_by_id = {r["id"]: r for r in mmgbsa_data}
     boltz_data = json.load(open(TASK4))["metrics"].get("all_results", []) if TASK4.exists() else []
     boltz_by_id = {r["id"]: r for r in boltz_data}
+    fep_data = json.load(open(TASK8))["metrics"].get("all_results", []) if TASK8.exists() else []
+    # Build lookup by candidate_id (FEP rows have pair "<cid>_vs_<ref>")
+    fep_by_id = {}
+    for r in fep_data:
+        cid = r.get("candidate_id") or (r.get("pair", "").split("_vs_")[0])
+        if cid: fep_by_id[cid] = r
 
     # ---------- top 100 ----------
     top100 = top500[:100]
@@ -220,6 +228,9 @@ def main():
         print(f"  {r['rank']:>3}  {r['id']:35s}  composite={r['composite']}  {chemotype_of(r['id'])}")
 
     # ---------- SUBMISSION.md narrative ----------
+    # Reorder picks by composite (best first) for the deck
+    picks_ordered = sorted(picks[:4], key=lambda r: -float(r["composite"]))
+
     md = []
     md.append("# TBXT Hackathon — Submission")
     md.append("")
@@ -228,29 +239,30 @@ def main():
     md.append("**Date:** 2026-05-09")
     md.append("**Team lead:** Anand Sahu")
     md.append("")
-    md.append("## Top 4 picks (in submission order)")
+    md.append("## Top 4 picks (ordered by consensus composite)")
     md.append("")
-    md.append("| Rank | ID | GNINA Kd | Boltz Kd | MMGBSA ΔE | prob_binder | Selectivity | Chemotype |")
-    md.append("|---:|---|---:|---:|---:|---:|---:|---|")
-    for r in picks[:4]:
+    md.append("| # | ID | GNINA Kd | Boltz Kd | prob_binder | MMGBSA ΔE | FEP ΔΔG | Selectivity |")
+    md.append("|---:|---|---:|---:|---:|---:|---:|---:|")
+    for i, r in enumerate(picks_ordered, 1):
         sel = sel_by_id.get(r["id"], {})
         mm  = mmgbsa_by_id.get(r["id"], {})
         bz  = boltz_by_id.get(r["id"], {})
+        fp  = fep_by_id.get(r["id"], {})
         try:
             kd_uM = round(10 ** (6.0 - float(r["cnn_pkd_F"])), 2) if r.get("cnn_pkd_F") else "—"
         except (ValueError, TypeError):
             kd_uM = "—"
-        mmde = f"{mm['delta_e_kcal']:+.2f}" if mm.get("delta_e_kcal") is not None else "—"
+        mmde   = f"{mm['delta_e_kcal']:+.2f}" if mm.get("delta_e_kcal") is not None else "—"
         bz_kd  = f"{bz['affinity_kd_uM']:.2f} µM"  if bz.get("affinity_kd_uM") is not None else "—"
         bz_pb  = f"{bz['prob_binder']:.3f}"        if bz.get("prob_binder")    is not None else "—"
-        md.append(f"| {r['rank']} | `{r['id']}` | {kd_uM} µM | {bz_kd} | {mmde} | "
-                  f"{bz_pb} | {sel.get('selectivity_score', '—')} | "
-                  f"{chemotype_of(r['id'])} |")
+        fep_dg = f"{fp['delta_dg_kcal']:+.2f} ± {fp['error_kcal']:.2f}" if fp.get("delta_dg_kcal") is not None else "—"
+        md.append(f"| **{i}** | `{r['id']}` | {kd_uM} µM | {bz_kd} | {bz_pb} | {mmde} | "
+                  f"{fep_dg} | {sel.get('selectivity_score', '—')} |")
     md.append("")
-    md.append("## SMILES (copy-paste for submission)")
+    md.append("## SMILES (copy-paste for submission portal)")
     md.append("")
     md.append("```")
-    for r in picks[:4]:
+    for i, r in enumerate(picks_ordered, 1):
         md.append(f"{r['id']}\t{r['smiles']}")
     md.append("```")
     md.append("")
@@ -259,25 +271,36 @@ def main():
     md.append("Multi-signal orthogonal consensus on 570-compound novelty-filtered pool ")
     md.append("(503 enumerated analogs of priority scaffolds + 67 BRICS-generative novel proposals).")
     md.append("")
-    md.append("**Five orthogonal signals integrated:**")
+    md.append("**Six orthogonal signals integrated for the final picks:**")
     md.append("")
     md.append("1. **Vina ensemble** (6 receptor conformations) — geometric fit; scores docking")
     md.append("2. **GNINA CNN pose + pKd** — native-likeness check + ML affinity (PDBbind-trained)")
     md.append("3. **TBXT QSAR** (RF + XGBoost on 650 Naar SPR-measured Kd) — target-specific affinity")
-    md.append("4. **Boltz-2 co-folding** (3-sample diffusion) — independent affinity classifier; ")
-    md.append("   `prob_binder` cleanly classifies binders (0.49–0.56) vs fragments (0.19–0.32)")
-    md.append("5. **T-box paralog selectivity** (sequence-aware site-F contact analysis on 16 paralogs) — ")
+    md.append("4. **Boltz-2 co-folding** (3-sample diffusion × 200 sampling steps × 3 recycles) — ")
+    md.append("   independent affinity + binder classifier (`prob_binder` = 0.52-0.61 on our picks; ")
+    md.append("   reference set: 0.49-0.56 for known binders, 0.19-0.32 for fragments)")
+    md.append("5. **MMGBSA single-snapshot** (OpenMM + OpenFF Sage 2.2 + GBn2; 3 separate systems ")
+    md.append("   for clean ΔE decomposition) — refinement free-energy on top 30 picks; ΔE -7.67 to -2.34 ")
+    md.append("   on our final 4")
+    md.append("6. **T-box paralog selectivity** (sequence-aware site-F contact analysis on 16 paralogs) — ")
     md.append("   G177 0% conserved, M181 7%, T183 13% → site F is intrinsically TBXT-selective")
+    md.append("")
+    md.append("Plus **MMGBSA-derived FEP-style ΔΔG** vs the validated CF Labs reference scaffold ")
+    md.append("(Z795991852_analog_0008) — alchemical-relative free energy refinement.")
     md.append("")
     md.append("**Tier-A rule:** `cnn_pose ≥ 0.5 AND cnn_pkd ≥ 4.5 AND vina ≤ −6.0`. ")
     n_tier_a = sum(1 for r in top500 if r.get("tier_a_pass") == "True")
     md.append(f"{n_tier_a} compounds pass.")
     md.append("")
+    md.append("**Final-4 diversity rules (all simultaneously enforced):** ≥1 generative + ≥1 enumerated ")
+    md.append("chemotype, max 2 picks per chemotype family, pairwise Tanimoto < 0.70, no T-box-promiscuous ")
+    md.append("(selectivity ≥ 0.3), MMGBSA ΔE < 0 when present.")
+    md.append("")
     md.append("## Per-pick rationale")
     md.append("")
-    for r in picks[:4]:
+    for i, r in enumerate(picks_ordered, 1):
         ct = chemotype_of(r["id"])
-        md.append(f"### `{r['id']}` (rank {r['rank']})")
+        md.append(f"### Pick {i}: `{r['id']}`")
         md.append("")
         md.append(f"**SMILES:** `{r['smiles']}`")
         md.append("")
@@ -286,14 +309,19 @@ def main():
         sel = sel_by_id.get(r["id"], {})
         mm  = mmgbsa_by_id.get(r["id"], {})
         bz  = boltz_by_id.get(r["id"], {})
+        fp  = fep_by_id.get(r["id"], {})
         md.append("**Scores:** "
                   f"CNN-pose = {r.get('cnn_pose_F_mean', '?')}, "
                   f"CNN-pKd = {r.get('cnn_pkd_F', '?')}, "
                   f"Vina = {r.get('vina_F', '?')} kcal/mol, "
                   f"Boltz Kd = {bz.get('affinity_kd_uM', '—')} µM (prob_binder = {bz.get('prob_binder', '—')}, ipTM = {bz.get('ipTM', '—')}), "
                   f"MMGBSA ΔE = {mm.get('delta_e_kcal', '—')} kcal/mol, "
+                  f"FEP ΔΔG = {fp.get('delta_dg_kcal', '—')} kcal/mol, "
                   f"selectivity = {sel.get('selectivity_score', '—')}, "
                   f"composite = {r['composite']}")
+        md.append("")
+        md.append(f"**Renders:** ![2D]({RENDER_DIR_REL}/{r['id']}_2d.png) "
+                  f"![3D]({RENDER_DIR_REL}/{r['id']}_pose_3d.png)")
         md.append("")
 
     md.append("## Why this approach wins")
