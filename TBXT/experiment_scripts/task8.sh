@@ -42,11 +42,18 @@ if [ "$TEST_MODE" = "true" ]; then
     MD_NS=0.1
     log_info "TEST MODE: 1 perturbation × 4 λ windows × 100 ps"
 else
-    INPUT_CSV="$DATA_DIR/_top8_input.csv"
-    head -9 "$TBXT_ROOT/data/tier_a/tier_a_candidates.csv" > "$INPUT_CSV"
+    # Production: prefer the top-4 + reference set staged by the lead from
+    # report/final_4_picks.csv. Falls back to top 8 from tier_a if missing.
+    INPUT_CSV="$DATA_DIR/_top4_input.csv"
+    if [ ! -f "$INPUT_CSV" ]; then
+        INPUT_CSV="$DATA_DIR/_top8_input.csv"
+        head -9 "$TBXT_ROOT/data/tier_a/tier_a_candidates.csv" > "$INPUT_CSV"
+        log_info "PRODUCTION: top 8 × 12 λ × 5 ns"
+    else
+        log_info "PRODUCTION: final 4 + reference from final_4_picks.csv (~10 min on GPU)"
+    fi
     N_LAMBDA=12
     MD_NS=5
-    log_info "PRODUCTION: top 8 × 12 λ × 5 ns"
 fi
 
 OUT_DIR="$DATA_DIR/fep_runs"

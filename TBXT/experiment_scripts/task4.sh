@@ -27,8 +27,17 @@ if [ "$TEST_MODE" = "true" ]; then
     FAST_FLAG="--fast"
     log_info "TEST MODE: 1 compound, --fast (1 sample × 25 steps)"
 else
-    INPUT_CSV="$TBXT_ROOT/data/full_pool_input.csv"
-    log_info "PRODUCTION: $(wc -l < "$INPUT_CSV") compounds"
+    # Production: prefer top-30 from task2 consensus (fits in GPU time budget on RTX 5050).
+    # On A100, member can replace with --smiles-csv data/full_pool_input.csv for full sweep.
+    INPUT_CSV="$DATA_DIR/_top30_input.csv"
+    if [ -f "$TBXT_ROOT/data/task2/trial1/top30_input.csv" ]; then
+        cp "$TBXT_ROOT/data/task2/trial1/top30_input.csv" "$INPUT_CSV"
+        log_info "PRODUCTION: top 30 picks from task2 consensus (~3 GPU-h on RTX 5050)"
+    else
+        log_warn "No top-30 input from task2; using full pool (will take ~30+ GPU-h)"
+        INPUT_CSV="$TBXT_ROOT/data/full_pool_input.csv"
+        log_info "PRODUCTION: $(wc -l < "$INPUT_CSV") compounds"
+    fi
 fi
 
 OUT_DIR="$DATA_DIR/boltz_runs"

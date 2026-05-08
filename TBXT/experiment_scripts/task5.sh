@@ -26,13 +26,16 @@ if [ "$TEST_MODE" = "true" ]; then
     head -2 "$TBXT_ROOT/data/full_pool_input.csv" > "$INPUT_CSV"
     log_info "TEST MODE: 1 compound (validates toolchain only — energies still bugged)"
 else
-    INPUT_CSV="$DATA_DIR/_top50_input.csv"
-    if [ -f "$TBXT_ROOT/data/tier_a/tier_a_candidates.csv" ]; then
-        head -51 "$TBXT_ROOT/data/tier_a/tier_a_candidates.csv" > "$INPUT_CSV"
-        log_info "PRODUCTION: top 50 picks from tier_a_candidates.csv"
+    INPUT_CSV="$DATA_DIR/_top30_input.csv"
+    if [ -f "$TBXT_ROOT/data/task2/trial1/top30_input.csv" ]; then
+        cp "$TBXT_ROOT/data/task2/trial1/top30_input.csv" "$INPUT_CSV"
+        log_info "PRODUCTION: top 30 picks from task2 consensus (data/task2/trial1/top30_input.csv)"
+    elif [ -f "$TBXT_ROOT/data/tier_a/tier_a_candidates.csv" ]; then
+        head -31 "$TBXT_ROOT/data/tier_a/tier_a_candidates.csv" > "$INPUT_CSV"
+        log_info "PRODUCTION: top 30 picks from tier_a_candidates.csv"
     else
-        log_warn "tier_a_candidates.csv not found; using full_pool_input.csv head"
-        head -51 "$TBXT_ROOT/data/full_pool_input.csv" > "$INPUT_CSV"
+        log_warn "no top-N input found; using full_pool_input.csv head"
+        head -31 "$TBXT_ROOT/data/full_pool_input.csv" > "$INPUT_CSV"
     fi
 fi
 
