@@ -66,8 +66,10 @@ def run_boltz(yaml_path, out_dir, fast=False):
     # Fast mode reduces samples + sampling steps for smoke-test on CPU.
     diffusion = "1" if fast else "3"
     recycling = "1" if fast else "3"
-    sampling  = "25" if fast else "200"
-    timeout   = 600 if fast else 1800
+    sampling  = "10" if fast else "200"
+    # CPU diffusion at 178-aa is ~3-5 min/step; allow 30 min for fast smoke-test
+    # (production GPU should finish in <2 min/compound).
+    timeout   = 1800 if fast else 3600
     cmd = [
         sys.executable, str(safeload), "predict", str(yaml_path),
         "--out_dir", str(out_dir),

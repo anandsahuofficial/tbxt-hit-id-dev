@@ -146,6 +146,28 @@ else
   chmod +x "$PROJECT_DIR/bin/gnina"
 fi
 
+# ─── Step 5b: post-install env patches ─────────────────────────────────────
+# Older Drive bundles ship torchvision==0.24.1 (CUDA wheel) which is ABI-broken
+# against torch 2.8.0 (CPU). Replace it with the matching CPU wheel so Boltz-2
+# (task4) and OpenFF (task5) imports succeed. Idempotent — verifies the import
+# first and only patches if it fails. Safe to re-run; no-op once fixed.
+log "Verifying torchvision/openff imports..."
+set +u
+source "$CONDA_DIR/etc/profile.d/conda.sh"; conda activate "$ENV_NAME"
+if ! python -c "import torchvision; from openff.toolkit import Molecule" 2>/dev/null; then
+  log "  Patching torchvision (replacing broken CUDA wheel with 0.23.0+cpu)..."
+  pip install --quiet --force-reinstall --no-deps "torchvision==0.23.0" \
+    --index-url https://download.pytorch.org/whl/cpu
+  if python -c "import torchvision; from openff.toolkit import Molecule" 2>/dev/null; then
+    log "  ✓ torchvision/openff imports OK"
+  else
+    log "  ⚠ patch did not fully resolve imports — see report below"
+  fi
+else
+  log "  ✓ torchvision/openff imports already OK (no patch needed)"
+fi
+set -u
+
 # ─── Step 6: verify ─────────────────────────────────────────────────────────
 log "Running setup_check.sh..."
 set +u
