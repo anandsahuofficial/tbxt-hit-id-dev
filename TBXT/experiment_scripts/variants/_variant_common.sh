@@ -15,10 +15,14 @@ set -euo pipefail
 _VARIANT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 TBXT_ROOT="${TBXT_ROOT:-$(cd "$_VARIANT_DIR/../.." && pwd)}"
 
-# Activate the conda env up-front so 'python' / 'gnina' / 'boltz' resolve
-if [ -f "$HOME/miniconda3/etc/profile.d/conda.sh" ]; then
+# Activate the conda env up-front so 'python' / 'gnina' / 'boltz' resolve.
+# Honors $CONDA_DIR if set (e.g., HPC submissions install conda to project
+# space at /projectnb/.../Hackathon/miniconda3 because /usr3/graduate is
+# quota-limited). Falls back to $HOME/miniconda3 for laptop installs.
+_VARIANT_CONDA_DIR="${CONDA_DIR:-$HOME/miniconda3}"
+if [ -f "$_VARIANT_CONDA_DIR/etc/profile.d/conda.sh" ]; then
     set +u
-    source "$HOME/miniconda3/etc/profile.d/conda.sh"
+    source "$_VARIANT_CONDA_DIR/etc/profile.d/conda.sh"
     conda activate tbxt 2>/dev/null || true
     export LD_LIBRARY_PATH="$CONDA_PREFIX/lib:${LD_LIBRARY_PATH:-}"
     set -u

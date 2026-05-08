@@ -195,17 +195,24 @@ fi
 # ─── Step 2: clone / update the repo ────────────────────────────────────────
 log "Setting up repo at $CLONE_DIR..."
 mkdir -p "$TBXT_ROOT"
-if [ ! -d "$CLONE_DIR/.git" ]; then
+if [ -d "$CLONE_DIR/.git" ]; then
+  log "  repo exists; pulling latest"
+  (cd "$CLONE_DIR" && git fetch --all --quiet && git checkout "$BRANCH" --quiet && git pull --quiet) || true
+  (cd "$CLONE_DIR" && git checkout "$BRANCH" 2>/dev/null) || true
+elif [ -f "$PROJECT_DIR/setup_hf.sh" ] && [ -d "$PROJECT_DIR/scripts" ]; then
+  # Codebase pre-staged (e.g., rsync'd in from elsewhere). Skip git ops —
+  # this lets HPC nodes run setup_hf.sh against an rsync'd tree without
+  # needing GitHub credentials. Members on their laptops still get the
+  # normal clone path because their fresh checkout will not have these files.
+  log "  codebase pre-staged at $PROJECT_DIR (no .git — skipping clone)"
+else
   if ! git clone "$REPO_URL" "$CLONE_DIR" 2>/dev/null; then
     log "  SSH clone failed, trying HTTPS..."
     git clone "$REPO_HTTPS" "$CLONE_DIR"
   fi
-else
-  log "  repo exists; pulling latest"
-  (cd "$CLONE_DIR" && git fetch --all --quiet && git checkout "$BRANCH" --quiet && git pull --quiet) || true
+  (cd "$CLONE_DIR" && git checkout "$BRANCH" 2>/dev/null) || true
 fi
-(cd "$CLONE_DIR" && git checkout "$BRANCH" 2>/dev/null) || true
-[ -d "$PROJECT_DIR" ] || err "PROJECT_DIR ($PROJECT_DIR) not found after clone"
+[ -d "$PROJECT_DIR" ] || err "PROJECT_DIR ($PROJECT_DIR) not found after clone or staging"
 
 # ─── Step 3: download bundles from HF ───────────────────────────────────────
 mkdir -p "$DOWNLOAD_CACHE"
