@@ -61,6 +61,17 @@ err() { printf "\n[\033[31mERROR\033[0m] %s\n" "$*" >&2; exit 1; }
 drive_dl() {
   # Downloads a Drive file by ID to a local path. Resumable. Idempotent if SHA matches.
   local id="$1"; local out="$2"; local expected_sha="${3:-}"
+
+  # Detect a previously-cached HTML quota-error page and delete it so we retry.
+  if [ -f "$out" ]; then
+    local _hdr
+    _hdr=$(head -c 2 "$out" 2>/dev/null || echo "")
+    if [ "$_hdr" = "<!" ] || [ "$_hdr" = "<h" ] || [ "$_hdr" = "<H" ]; then
+      log "  WARN: cached file is HTML (prior quota error) — deleting and retrying"
+      rm -f "$out"
+    fi
+  fi
+
   if [ -f "$out" ] && [ -n "$expected_sha" ]; then
     local cur_sha
     cur_sha=$(sha256sum "$out" | awk '{print $1}')
@@ -77,6 +88,47 @@ drive_dl() {
     wget --continue -O "$out" "$url"
   else
     err "Need either wget or curl to download files."
+  fi
+
+  # Detect Google Drive quota / login HTML page returned with HTTP 200.
+  # curl --fail does not catch this (status is 200, body is HTML). Symptom:
+  # tiny file starting with "<!DOCTYPE" or "<html" / "<HTML". Bail with help.
+  if [ -f "$out" ]; then
+    local fsize
+    fsize=$(stat -c%s "$out" 2>/dev/null || stat -f%z "$out" 2>/dev/null || echo 0)
+    if [ "$fsize" -lt 102400 ]; then
+      local first2
+      first2=$(head -c 2 "$out" 2>/dev/null || echo "")
+      if [ "$first2" = "<!" ] || [ "$first2" = "<h" ] || [ "$first2" = "<H" ]; then
+        local snippet
+        snippet=$(head -c 400 "$out" | tr '\n' ' ' | head -c 200)
+        rm -f "$out"
+        cat >&2 <<EOF
+
+[ERROR] Drive returned an HTML page instead of the tarball.
+        File ID: ${id}
+        Saved to: ${out} (deleted)
+        Snippet: ${snippet}
+
+This is almost certainly Google Drive's 24-hour download-quota cap
+("Quota exceeded — you cannot view or download this file right now").
+Public "anyone with link" files cap at ~750 GB/day cumulative across
+all downloaders.
+
+Workarounds (in order of speed):
+  1. Wait ~24 h and retry.
+  2. Ask the file owner (Anand) to right-click the file in Drive
+     → "Make a copy" (creates a new file ID with a fresh quota counter)
+     → share the new ID; pass it via env on retry, e.g.:
+         ID_ENV=<newid> bash setup.sh
+  3. Use TBXT_DOWNLOAD_CACHE pointing to a USB / scp-shared local copy
+     of the tarball:
+         export TBXT_DOWNLOAD_CACHE=/path/to/local/cache
+         bash setup.sh
+EOF
+        exit 1
+      fi
+    fi
   fi
 }
 
