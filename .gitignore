@@ -104,5 +104,8 @@ TBXT/data/selectivity/site_A_residue_matrix.csv
 
 # Keep: FASTA sequences (public UniProt), grid_definitions (config), tep_fragments_table (small, public PDB derivation)
 
+# Smoke test outputs (generated each run by tests/smoke_test.py)
+TBXT/tests/smoke_out/
+
 # ─── Files we DO want in git (overrides above with explicit !) ─────────────
 # (None currently — keep this section in case we need it later)
