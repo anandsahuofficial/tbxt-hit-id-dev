@@ -49,11 +49,7 @@ ID_DATA="1bIt-i083BhIqO83vGx2mHjFokUGhedQG"
 ID_CHECKSUMS="12K_DjcSEeaGojCHCEgMxYGQByIx48mQY"
 ID_MANIFEST="1Ob6cBitmqw3XcYIXnT1r7204niNUa5F8"
 # Supplement: docked poses + ligands needed by task5/6/8/9 (~2 MB).
-# Set this once the user uploads tbxt_data_supplement.tar.gz to Drive.
-# If empty, setup.sh skips supplement extraction with a warning (members
-# can run task2/3 first to regenerate poses, OR copy from
-# $TBXT_DOWNLOAD_CACHE/tbxt_data_supplement.tar.gz if present locally).
-ID_SUPPLEMENT="${ID_SUPPLEMENT:-}"
+ID_SUPPLEMENT="${ID_SUPPLEMENT:-1aOFQDBWWR3534j1pJO8fd3MNDKiN0mne}"
 REPO_URL="git@github.com:anandsahuofficial/Hackathon.git"
 REPO_HTTPS="https://github.com/anandsahuofficial/Hackathon.git"
 BRANCH="TBXT"
@@ -139,14 +135,31 @@ drive_dl "$ID_MANIFEST"  "$DOWNLOAD_CACHE/MANIFEST_data_bundle.txt"
 # Parse expected SHAs from CHECKSUMS.sha256 (format: "<hash>  <filename>")
 ENV_SHA=$(grep -E "tbxt_env\.tar\.gz$"          "$DOWNLOAD_CACHE/CHECKSUMS.sha256" | awk '{print $1}')
 DATA_SHA=$(grep -E "tbxt_data_bundle\.tar\.gz$" "$DOWNLOAD_CACHE/CHECKSUMS.sha256" | awk '{print $1}')
+SUPP_SHA=$(grep -E "tbxt_data_supplement\.tar\.gz$" "$DOWNLOAD_CACHE/CHECKSUMS.sha256" | awk '{print $1}')
 [ -n "$ENV_SHA" ]  || err "Could not parse env tarball SHA from CHECKSUMS.sha256"
 [ -n "$DATA_SHA" ] || err "Could not parse data tarball SHA from CHECKSUMS.sha256"
 
 drive_dl "$ID_DATA" "$DOWNLOAD_CACHE/tbxt_data_bundle.tar.gz" "$DATA_SHA"
 drive_dl "$ID_ENV"  "$DOWNLOAD_CACHE/tbxt_env.tar.gz"         "$ENV_SHA"
 
+# Download supplement if listed in CHECKSUMS (and we have the Drive ID).
+# Skip silently if either is missing — downstream step 5a handles fallback.
+if [ -n "$SUPP_SHA" ] && [ -n "$ID_SUPPLEMENT" ]; then
+  drive_dl "$ID_SUPPLEMENT" "$DOWNLOAD_CACHE/tbxt_data_supplement.tar.gz" "$SUPP_SHA"
+fi
+
 log "Verifying checksums..."
-(cd "$DOWNLOAD_CACHE" && sha256sum -c CHECKSUMS.sha256) || err "Checksum verification failed"
+# Build a filtered CHECKSUMS containing only files that actually exist locally,
+# so sha256sum -c doesn't fail on optional files (supplement) we may not have.
+TMP_CHECKSUMS="$DOWNLOAD_CACHE/.CHECKSUMS.filtered"
+> "$TMP_CHECKSUMS"
+while IFS= read -r line; do
+  fname=$(echo "$line" | awk '{print $2}')
+  [ -z "$fname" ] && continue
+  [ -f "$DOWNLOAD_CACHE/$fname" ] && echo "$line" >> "$TMP_CHECKSUMS"
+done < "$DOWNLOAD_CACHE/CHECKSUMS.sha256"
+(cd "$DOWNLOAD_CACHE" && sha256sum -c "$(basename "$TMP_CHECKSUMS")") || err "Checksum verification failed"
+rm -f "$TMP_CHECKSUMS"
 
 # ─── Step 4: unpack the conda env ───────────────────────────────────────────
 # Helper: returns 0 if local SHA matches Drive SHA for the named tarball
@@ -221,7 +234,11 @@ fi
 
 # ─── Step 5a: unpack supplement (poses + ligands for task5/6/8/9) ──────────
 SUPPLEMENT_TAR="$DOWNLOAD_CACHE/tbxt_data_supplement.tar.gz"
-n_poses=$(ls "$PROJECT_DIR/data/full_pool_gnina_F/poses" 2>/dev/null | wc -l || echo 0)
+if [ -d "$PROJECT_DIR/data/full_pool_gnina_F/poses" ]; then
+  n_poses=$(ls "$PROJECT_DIR/data/full_pool_gnina_F/poses" | wc -l)
+else
+  n_poses=0
+fi
 
 need_supp_update="false"
 if [ "$n_poses" -lt 100 ]; then
