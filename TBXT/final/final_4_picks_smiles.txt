@@ -1,0 +1,4 @@
+FM002150_analog_0083	O=C(O)COCc1ccc(-c2ccsc2)cc1
+FM001452_analog_0104	Cc1ccccc1COc1cccc(N)c1
+FM001452_analog_0201	NC(=O)Nc1cccc(OCc2ccccc2)c1
+FM001452_analog_0171	Nc1cccc(OCc2ccc(-c3ccncc3)cc2)c1
