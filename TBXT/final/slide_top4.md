@@ -8,9 +8,7 @@ paginate: true
 
 **Multi-signal consensus pipeline for chordoma's master regulator**
 
-Anand Sahu — TBXT Hackathon, Pillar VC Boston · 2026-05-09
-
-*Project lead, methodology, and live demo: Anand Sahu.*
+TBXT Hackathon, Pillar VC Boston · 2026-05-09
 
 Target: TBXT G177D (Brachyury) · PDB 6F59 chain A · Site F (Y88 / D177 / L42)
 
@@ -29,9 +27,11 @@ Target: TBXT G177D (Brachyury) · PDB 6F59 chain A · Site F (Y88 / D177 / L42)
 | MMGBSA single-snapshot (top 30) | Free-energy refinement |
 | T-box paralog selectivity (16 paralogs) | Off-target risk |
 
+![w:240](image.png)
 **Final hard gate (T-0):** 100% onepot.ai exact match · strictly non-covalent · Tanimoto < 0.85 to organizer DBs
 
 ---
+
 
 ## Why this filter chain (judging axis: scientific rationale)
 
