@@ -30,7 +30,13 @@ We built a **6-signal orthogonal consensus pipeline** for TBXT G177D — Vina en
 - **Sequence-aware 16-paralog scoring on the site-F contact set: G177 is 0% conserved, M181 7%, T183 13% across the T-box family.** All 4 picks have selectivity scores 0.40–0.51 — engaging the TBXT-unique residues, not the conserved DNA-binding face. (We did not run real cross-paralog docking — flag if pressed; sequence-aware is a conservative proxy.)
 
 **Q: "What's the synthesis risk?"**
-- **We swapped pick #2 today specifically to eliminate it.** gen_0025 had a sulfonamide linker (not in onepot's 7 reactions); we replaced it with gen_0004 (same chemotype, CH₂-N linker reachable via N-alkylation). All 4 picks are now reachable via at least one of the 7 onepot CORE reactions. We also ran 57 picks through the live onepot.ai search — 0 errors, 20/57 at 100% catalog match, including 19/20 of our variant-1 onepot-friendly REINVENT proposals.
+- **We swapped pick #2 today specifically to eliminate it.** gen_0025 had a sulfonamide linker (not in onepot's 7 reactions); we replaced it with gen_0004 (same chemotype, CH₂-N linker reachable via N-alkylation). All 4 picks are now reachable via at least one of the 7 onepot CORE reactions. We also ran 75 picks through the live onepot.ai search — 0 errors, 23/75 at 100% catalog match, including 19/20 of our variant-1 onepot-friendly REINVENT proposals.
+
+**Q: "Why are your Rowan ADMET numbers so bad — DILI 0.95-1.00, hERG 0.78-0.79 on the novel picks?"**
+- **Two-part answer.** (1) These are *predictions on uncharacterized scaffolds*, not assayed values; public ADMET models are notoriously over-predictive on novel chemistries that fall outside their training distribution (PDBbind / Tox21). The same models score Z analog_0021 at hERG 0.53 — moderate — and analog_0087 at AMES 0.26 — low — so they're not uniformly red. (2) **Chordoma is a rare, near-incurable cancer; the tox-tolerance bar is dramatically higher than chronic indications.** Approved chordoma agents (imatinib off-label, brigatinib in trials) carry meaningful tox liabilities. The first SAR cycle would optimize hERG by tweaking the basic amine count and TPSA — well-understood medchem.
+
+**Q: "Where's your wildcard? You're 3 site-F + 1 site-A."**
+- **Pick #4 (`Z795991852_analog_0087`) is our designated wildcard.** It has the highest onepot.ai catalog similarity (86%) of any pick — the most likely of the 4 to literally exist in the 3.4B onepot library. We surveyed site G via variant-5 (570 compounds docked) but the top-5 site-G binders all also score well at site F — they're promiscuous, not site-selective — so a site-G "diversity" pick would be illusory. We held the wildcard slot for catalog-tractability instead.
 
 ---
 

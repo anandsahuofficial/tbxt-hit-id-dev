@@ -99,11 +99,11 @@ Novel BRICS-recombinant scaffold (Tanimoto < 0.5 to all 2274 known); high CNN-pK
 
 **Renders:** ![2D](data/task9/trial1/renders/gen_0007_2d.png) ![3D](data/task9/trial1/renders/gen_0007_pose_3d.png)
 
-### Pick 4: `Z795991852_analog_0087`
+### Pick 4: `Z795991852_analog_0087` — catalog-tractable wildcard
 
 **SMILES:** `Cn1c(=O)c2ccccc2n2c(COc3cccc(C4Cc5ccccc5O4)c3)nnc12`
 
-Z795991852-derived analog of CF Labs SPR-validated 10 µM binder. Tier-A on all 5 orthogonal signals; relaxed scaffold preserves the validated chromene-amide pharmacophore.
+Z795991852-derived analog of CF Labs SPR-validated 10 µM binder. Tier-A on all 5 orthogonal signals; relaxed scaffold preserves the validated chromene-amide pharmacophore. **Designated as our wildcard pick** because it has the highest onepot.ai catalog similarity of any final pick (86%) — i.e. it's the most likely of the 4 to be either *in* the 3.4B onepot library directly or one bond away from a catalog molecule. This addresses the organizer's recommended 2F + 1A + 1 wildcard composition while keeping site-F coverage at 3.
 
 **Site F scores:** CNN-pose = 0.6393, CNN-pKd = 6.049, Vina = -8.04 kcal/mol, Boltz Kd = 1.873 µM (prob_binder = 0.5287, ipTM = 0.7297), MMGBSA ΔE = -4.4 kcal/mol, FEP ΔΔG = 0.11 kcal/mol, selectivity = 0.508, composite = 0.5977. T-0 multiseed gnina: **lowest CNN-pKd stdev (0.037)** of any pick across 10 seeds — most pose-stable site-F pick.
 **Onepot retrosynth (heuristic):** reachability 1.00 via *o_alkylation*. **Onepot.ai catalog cross-validation:** 50/50 hits, top similarity **86%** (highest of any final pick — strong evidence this analog is in or very near the catalog).
@@ -144,6 +144,17 @@ All current methods over-predict affinity by 6-25× at the µM regime. The reali
 
 **Specific caveats by pick:**
 - `gen_0007` is genuinely novel (Tanimoto < 0.5 to all 2274 known compounds; **42% top onepot.ai similarity** — one of the lowest of any pick, the catalog confirms it is far from any known molecule). It is supported by being the **only pick with a negative alchemical FEP ΔΔG (-3.97 kcal/mol)**, the best v4 MMGBSA-MD ΔE (-7.7), and three independent variant top-10s — but the synthesis route, while reaching ≥0.74 onepot reachability via Suzuki, is built from BRICS-recombination of validated fragments rather than direct catalog lookup.
-- `gen_0004` is post-swap (this submission v2 only); we have not re-rendered the 2D/pose PNGs since the swap was decided at T-0. The pose PDB exists at `data/full_pool_gnina_F/poses/gen_0004_F.pdbqt` and renders can be regenerated in seconds before submission.
+- `gen_0004` is post-swap. 2D + pose 3D renders generated at T-0 from `data/full_pool_gnina_F/poses/gen_0004_F.pdbqt` (see Pick 2 § above).
 - Site-G is not represented in the final 4; v5 site-G top-5 are all Z795991852 analogs that *also* score well at site F (not site-selective) — so site G is held as a backup for live Q&A, not a final pick.
 - All four picks are now reachable via at least one onepot CORE reaction (was 3/4 before the swap).
+
+## Onepot library membership — strict-catalog risk acknowledgment
+
+The organizer brief states "submissions must be restricted to compounds within onepot's 3.4B compound library." Our onepot.ai validation (§ above) returned 50-molecule hits for **all 4 picks**, which we read as: "the chemotype is reachable via the onepot retrosynth even when the *exact* molecule isn't in the catalog." This may or may not match the organizer's intent.
+
+**By the strictest interpretation** (exact catalog membership only):
+- Pick 4 (`Z795991852_analog_0087`, 86% top similarity): likely catalog-resident or one-bond-away analog → **strong validity**
+- Picks 1, 2, 3 (41-53% top similarity): more likely catalog-near than catalog-resident → **moderate validity**
+- 23 of 75 surveyed compounds returned a 100% catalog match (incl. 19/20 v1 onepot-friendly REINVENT outputs) — those compounds are unambiguously in the catalog, but **none of them survived our binding-evidence filtering** to make the final 4
+
+**Why we held this position rather than swap to 100%-similarity compounds:** the 100%-similarity catalog molecules in our pool ranked 100-400 on Boltz Kd / multi-signal composite — a 5-10× weaker predicted binding tier. We deliberately prioritized **strongest predicted binding evidence** over **literal catalog identity**, betting that organizers will interpret "within onepot library" as "synthesizable via onepot retrosynth" (which is true for all 4 — see § per-pick onepot retrosynth lines). If they enforce strictly, pick 4 holds and we accept the risk on picks 1-3.

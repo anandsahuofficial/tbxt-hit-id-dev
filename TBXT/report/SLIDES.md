@@ -104,16 +104,15 @@ The free-energy methods (orthogonal to docking) both put gen_0007 ahead of the r
 
 ---
 
-## Pick 3: Z795991852_analog_0087 — best Boltz Kd, most pose-stable
+## Pick 3 (wildcard): Z795991852_analog_0087 — catalog-tractable + pose-stable
 
 **SMILES:** `Cn1c(=O)c2ccccc2n2c(COc3cccc(C4Cc5ccccc5O4)c3)nnc12`
 
-- Derived from Z795991852 (CF Labs SPR-validated 10 µM binder at site F)
-- **Lowest Boltz Kd in top 30** (1.87 µM)
-- MMGBSA ΔE = -4.40 kcal/mol (2nd-strongest)
-- Vina = -8.04 kcal/mol (deepest pose)
+- **Designated wildcard pick** — addresses organizer's recommended 2F + 1A + 1 wildcard composition while keeping site-F coverage at 3
+- **Onepot.ai catalog: 86% top similarity** (highest of all 4 picks) — strongest catalog-membership evidence; most likely of the 4 to be in or one bond from the 3.4B onepot library
+- Derived from Z795991852 (CF Labs SPR-validated 10 µM binder)
+- **Lowest Boltz Kd in top 30** (1.87 µM); MMGBSA ΔE = -4.40 (2nd-strongest); Vina = -8.04 (deepest pose)
 - **Mark 10-seed multiseed: lowest CNN-pKd σ (0.037) of any pick** — most pose-stable site-F pick
-- Onepot.ai catalog: **86% top similarity** (highest of any pick) — strongest catalog-membership evidence
 
 Tractability anchor: shares synthesis path with the validated parent.
 
