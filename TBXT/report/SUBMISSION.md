@@ -4,7 +4,7 @@
 **Sites:** F (Y88 / D177 / L42 anchor — TBXT-unique residues)
 **Receptor:** PDB 6F59 chain A (G177D variant)
 **Date:** 2026-05-09
-**Team lead:** Anand Sahu
+**Project lead / methodology / live demo:** Anand Sahu
 
 > **v3 change vs v2 SUBMISSION.md:** All 4 picks swapped after T-0 clarification that final picks must (1) be 100% onepot.ai catalog match (similarity = 1.000 in the muni.bio `onepot` tool), (2) be strictly non-covalent (no boronic acids — they're reversible covalent), and (3) Tanimoto < 0.85 to all organizer-provided databases (Naar SPR, TEP fragments, prior_art_canonical). Previous picks (`gen_0007`, `gen_0004`, `Z795991852_analog_0021`, `Z795991852_analog_0087`) failed criterion 1 (max 86% similarity, most 41–53%). New picks all come from our Boltz-validated FM_* family that was already in our 570-compound pool.
 
@@ -64,7 +64,7 @@ C7 predicted soluble (ESOL log S > -5)
 The 4 final picks above come from **T2 ranks 1, 2, 11 + T3 rank 22**.
 
 **Files:**
-- Full data: [`data/all_candidates_tiered.csv`](data/all_candidates_tiered.csv) — 137 rows, every per-criterion pass/fail flag, sortable by any column
+- Full data: [`TBXT/final/all_candidates_tiered.csv`](../final/all_candidates_tiered.csv) — 137 rows, every per-criterion pass/fail flag, sortable by any column
 - Rationale + per-tier explanation: [`report/TIERED_CANDIDATES_RATIONALE.md`](TIERED_CANDIDATES_RATIONALE.md)
 
 **Top 30 for the experimental program first batch:** T2 ranks 1-16 + T3 ranks 17-30 (all detailed in TIERED_CANDIDATES_RATIONALE.md).

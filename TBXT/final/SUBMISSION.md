@@ -64,7 +64,7 @@ C7 predicted soluble (ESOL log S > -5)
 The 4 final picks above come from **T2 ranks 1, 2, 11 + T3 rank 22**.
 
 **Files:**
-- Full data: [`data/all_candidates_tiered.csv`](data/all_candidates_tiered.csv) — 137 rows, every per-criterion pass/fail flag, sortable by any column
+- Full data: [`all_candidates_tiered.csv`](all_candidates_tiered.csv) — 137 rows, every per-criterion pass/fail flag, sortable by any column
 - Rationale + per-tier explanation: [`report/TIERED_CANDIDATES_RATIONALE.md`](TIERED_CANDIDATES_RATIONALE.md)
 
 **Top 30 for the experimental program first batch:** T2 ranks 1-16 + T3 ranks 17-30 (all detailed in TIERED_CANDIDATES_RATIONALE.md).

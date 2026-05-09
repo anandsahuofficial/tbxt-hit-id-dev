@@ -17,7 +17,7 @@ If a file isn't in `final/`, it's not part of the submission.
 | **Submit the 4 picks** (hackathon judging) | `final_4_picks.csv` + `final_4_picks_smiles.txt` |
 | **Read the written submission** | `SUBMISSION.md` |
 | **Present the live demo** | `SLIDES.md` (Marp) — methodology + per-pick slides |
-| **Pick top N from the 137-candidate pool** (experimental program first batch) | `tiered/TIERED_CANDIDATES_RATIONALE.md` + `tiered/all_candidates_tiered.csv` |
+| **Pick top N from the 137-candidate pool** (experimental program first batch) | `tiered/TIERED_CANDIDATES_RATIONALE.md` + `all_candidates_tiered.csv` |
 | **Coordinate as a sub-team** (5 teams × 4 picks) | `team_distribution/TEAM_5_GROUPS_PICKS.md` |
 
 ## Directory layout
@@ -29,11 +29,11 @@ final/
 ├── SLIDES.md                          ← Marp slide deck for live demo
 ├── final_4_picks.csv                  ← THE 4 RANKED PICKS — primary deliverable
 ├── final_4_picks_smiles.txt           ← tab-separated id<TAB>SMILES, copy-paste-ready
+├── all_candidates_tiered.csv          ← 137 rows, every per-criterion flag (the master pool)
 │
-├── tiered/                            ← 137-candidate pool (experimental program)
+├── tiered/                            ← per-tier rationale + top-30 first-batch list
 │   ├── TIERED_CANDIDATES_RATIONALE.md
-│   ├── all_candidates_tiered.csv      ← 137 rows, every per-criterion flag
-│   └── onepot_top30_picks.csv         ← top 30 first-batch list
+│   └── onepot_top30_picks.csv
 │
 ├── team_distribution/                 ← sub-team coordination
 │   ├── TEAM_5_GROUPS_PICKS.md         ← 5 sub-teams × 4 picks allocation
