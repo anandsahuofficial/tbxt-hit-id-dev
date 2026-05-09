@@ -12,13 +12,15 @@ If a file isn't in `final/`, it's not part of the submission.
 
 ## What to read first
 
+**The team submits 24 compounds total: 4 to judges + 20 additional for experimental program.**
+
 | If you want to … | Open |
 |---|---|
-| **Submit the 4 picks** (hackathon judging) | `final_4_picks.csv` + `final_4_picks_smiles.txt` |
-| **Read the written submission** | `SUBMISSION.md` |
-| **Present the live demo** | `SLIDES.md` (Marp) — methodology + per-pick slides |
-| **Pick top N from the 137-candidate pool** (experimental program first batch) | `tiered/TIERED_CANDIDATES_RATIONALE.md` + `all_candidates_tiered.csv` |
-| **Coordinate as a sub-team** (5 teams × 4 picks) | `team_distribution/TEAM_5_GROUPS_PICKS.md` |
+| **Hackathon judging — present 4 picks** | `submission_top4.md` + `slide_top4.md` + `top4.csv` + `top4_rationale.md` |
+| **Experimental program first batch — 20 additional picks** | `submission_top5to24.md` + `slide_top5to24.md` + `top5to24.csv` + `top5to24_rationale.md` |
+| **Pick top N (10/30/50) from full 137-candidate pool** | `tiered/TIERED_CANDIDATES_RATIONALE.md` + `all_candidates_tiered.csv` |
+| **Coordinate as a sub-team** (legacy 5×4 split) | `team_distribution/TEAM_5_GROUPS_PICKS.md` |
+| **Older single-submission view** (kept for reference) | `SUBMISSION.md` + `SLIDES.md` + `final_4_picks.csv` |
 
 ## Directory layout
 
