@@ -124,6 +124,9 @@ TBXT/report/backup_*/
 /RSYNC_REMOTE.sh
 /.rsync_logs/
 /.tbxt_hpc_config
+/run_variants_locally.sh
+/.variants_run_logs/
+/variants_run.log
 
 # ─── Files we DO want in git (overrides above with explicit !) ─────────────
 # (None currently — keep this section in case we need it later)

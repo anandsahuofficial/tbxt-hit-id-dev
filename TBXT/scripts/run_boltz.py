@@ -10,6 +10,7 @@ Output:
 import argparse
 import csv
 import json
+import os
 import shutil
 import subprocess
 import sys
@@ -150,11 +151,48 @@ def main():
     print(f"Co-folding {len(rows)} compounds with TBXT G177D ({len(TBXT_G177D_DBD)} aa)")
 
     out_root = Path(args.out_dir)
+
+    cols = ["cid", "status", "smiles", "pLDDT", "pTM", "ipTM", "ipTM_best",
+            "lig_iptm", "confidence", "confidence_best",
+            "affinity_log_kd_uM", "affinity_kd_uM", "affinity_pkd",
+            "affinity_prob_binder", "elapsed_s", "n_pdbs", "n_models", "pred_dir"]
+    out_csv = BOLTZ_OUT / "boltz_summary.csv"
+
+    # Resume: cids already in the summary CSV with status=ok are skipped.
+    # Failed/no-predictions cids are RETRIED on resume.
+    done_ids = set()
     summary = []
-    for i, row in enumerate(rows, 1):
+    if out_csv.exists():
+        for r in csv.DictReader(open(out_csv)):
+            if r.get("status") == "ok":
+                done_ids.add(r["cid"])
+                summary.append(r)
+        print(f"Resume: {len(done_ids)} cids already OK in {out_csv.name}; skipping those")
+
+    todo = [r for r in rows if r["id"] not in done_ids]
+    print(f"To run: {len(todo)} compounds ({len(rows) - len(todo)} skipped)")
+
+    # Open the CSV for incremental append. Rewrite header + prior OK rows so
+    # the file is well-formed in either case (new file OR existing partial).
+    out_csv.parent.mkdir(parents=True, exist_ok=True)
+    csv_fh = open(out_csv, "w", newline="")
+    csv_w = csv.DictWriter(csv_fh, fieldnames=cols)
+    csv_w.writeheader()
+    for r in summary:
+        csv_w.writerow({k: r.get(k, "") for k in cols})
+    csv_fh.flush()
+    os.fsync(csv_fh.fileno())
+
+    def emit(row_dict):
+        summary.append(row_dict)
+        csv_w.writerow({k: row_dict.get(k, "") for k in cols})
+        csv_fh.flush()
+        os.fsync(csv_fh.fileno())
+
+    for i, row in enumerate(todo, 1):
         cid = row["id"]
         smiles = row["smiles"]
-        print(f"\n[{i}/{len(rows)}] {cid} : {smiles}")
+        print(f"\n[{i}/{len(todo)}] {cid} : {smiles}")
         yaml_path = write_yaml(cid, smiles)
         out_dir = out_root / cid
         out_dir.mkdir(parents=True, exist_ok=True)
@@ -165,15 +203,16 @@ def main():
         if rc.returncode != 0:
             print(f"  FAIL ({elapsed:.0f}s):")
             print(f"  stderr: {rc.stderr[-500:]}")
-            summary.append({"cid": cid, "status": "fail", "elapsed_s": round(elapsed, 1),
-                            "err": rc.stderr[-500:]})
+            emit({"cid": cid, "status": "fail", "elapsed_s": round(elapsed, 1),
+                  "err": rc.stderr[-500:]})
             continue
 
         info = parse_results(out_dir, Path(yaml_path).stem)
         if info is None:
             print(f"  No predictions parsed ({elapsed:.0f}s)")
-            summary.append({"cid": cid, "status": "no_predictions", "elapsed_s": round(elapsed, 1)})
+            emit({"cid": cid, "status": "no_predictions", "elapsed_s": round(elapsed, 1)})
             continue
+        info["cid"] = cid
         info["status"] = "ok"
         info["elapsed_s"] = round(elapsed, 1)
         info["smiles"] = smiles
@@ -181,19 +220,10 @@ def main():
               f"ipTM={info.get('ipTM', 'NA')}, "
               f"affinity={info.get('affinity_kd_uM', 'NA')} µM, "
               f"prob_binder={info.get('affinity_prob_binder', 'NA')}")
-        summary.append(info)
+        emit(info)
 
-    cols = ["cid", "status", "smiles", "pLDDT", "pTM", "ipTM", "ipTM_best",
-            "lig_iptm", "confidence", "confidence_best",
-            "affinity_log_kd_uM", "affinity_kd_uM", "affinity_pkd",
-            "affinity_prob_binder", "elapsed_s", "n_pdbs", "n_models", "pred_dir"]
-    out_csv = BOLTZ_OUT / "boltz_summary.csv"
-    with open(out_csv, "w", newline="") as f:
-        w = csv.DictWriter(f, fieldnames=cols)
-        w.writeheader()
-        for r in summary:
-            w.writerow({k: r.get(k, "") for k in cols})
-    print(f"\nWrote {out_csv}")
+    csv_fh.close()
+    print(f"\nWrote {out_csv} ({len(summary)} total rows)")
 
 
 if __name__ == "__main__":

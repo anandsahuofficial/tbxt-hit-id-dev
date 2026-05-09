@@ -39,7 +39,10 @@ log = logging.getLogger("gnina")
 DOCK = Path(__file__).resolve().parents[1] / "data/dock"
 RECEPTOR_PDBQT = DOCK / "receptor" / "6F59_apo.pdbqt"
 GRID_DEFS = DOCK / "grid_definitions.json"
-GNINA_BIN = Path(__file__).resolve().parents[1] / "bin/gnina"
+# GNINA binary path. Honors $GNINA_BIN so HPC submissions can swap in a
+# singularity-wrapped binary (TBXT/bin/gnina is glibc-incompatible on SCC).
+GNINA_BIN = Path(os.environ.get("GNINA_BIN",
+    str(Path(__file__).resolve().parents[1] / "bin/gnina")))
 
 CONDA_PREFIX = os.environ.get("CONDA_PREFIX", "/home/anandsahu/miniconda3/envs/tbxt")
 
@@ -112,13 +115,20 @@ def run_gnina(receptor, ligand, center, size, out_pose, exhaustiveness=8, num_mo
 def main():
     p = argparse.ArgumentParser()
     p.add_argument("--smiles-csv", required=True)
-    p.add_argument("--site", required=True, choices=["F", "A"])
+    p.add_argument("--site", required=True, choices=["F", "A", "G"])
     p.add_argument("--out-dir", required=True)
     p.add_argument("--exhaustiveness", type=int, default=8)
     p.add_argument("--num-modes", type=int, default=9)
     p.add_argument("--cnn-scoring", default="rescore", choices=["rescore", "refinement", "all", "metrorescore"])
     p.add_argument("--limit", type=int, default=0)
+    p.add_argument("--receptor-pdbqt", default=str(RECEPTOR_PDBQT),
+                   help="Path to receptor .pdbqt (default: 6F59_apo.pdbqt)")
     args = p.parse_args()
+
+    receptor_path = Path(args.receptor_pdbqt).resolve()
+    if not receptor_path.exists():
+        log.error(f"Receptor not found: {receptor_path}")
+        sys.exit(2)
 
     out = Path(args.out_dir)
     out.mkdir(parents=True, exist_ok=True)
@@ -128,34 +138,65 @@ def main():
     grids = json.loads(GRID_DEFS.read_text())
     g = grids[args.site]
     log.info(f"Site {args.site}: center={g['center_xyz_A']} size={g['box_size_A']}")
+    log.info(f"Receptor: {receptor_path.name}")
     log.info(f"GNINA: {GNINA_BIN}  cnn_scoring={args.cnn_scoring}  exh={args.exhaustiveness}")
 
     rows = list(csv.DictReader(open(args.smiles_csv)))
     if args.limit:
         rows = rows[: args.limit]
-    log.info(f"Scoring {len(rows)} ligands")
 
+    cols = ["id", "smiles", "best_vina_kcal", "best_cnn_pose_score",
+            "best_cnn_affinity_pkd", "best_cnn_affinity_uM", "n_modes",
+            "all_vina", "all_cnn_pose", "all_cnn_pkd", "status"]
+    res_csv = out / "dock_results_gnina.csv"
+
+    # Resume: if the CSV already exists, treat the cids in it as done.
+    # New run inherits prior results; we only dock cids not in the done set.
+    done_ids = set()
     results = []
-    for i, row in enumerate(rows, 1):
+    if res_csv.exists():
+        for r in csv.DictReader(open(res_csv)):
+            done_ids.add(r["id"])
+            results.append(r)
+        log.info(f"Resume: {len(done_ids)} cids already in {res_csv.name}; skipping those")
+
+    todo = [r for r in rows if r["id"] not in done_ids]
+    log.info(f"Scoring {len(todo)} ligands ({len(rows) - len(todo)} skipped)")
+
+    # Open the CSV for incremental append. Write header if file is new.
+    csv_is_new = not res_csv.exists()
+    csv_fh = open(res_csv, "a", newline="")
+    csv_w = csv.DictWriter(csv_fh, fieldnames=cols)
+    if csv_is_new:
+        csv_w.writeheader()
+        csv_fh.flush()
+
+    def emit(row_dict):
+        results.append(row_dict)
+        csv_w.writerow({k: row_dict.get(k, "") for k in cols})
+        csv_fh.flush()
+        os.fsync(csv_fh.fileno())
+
+    for i, row in enumerate(todo, 1):
         cid = row["id"]
         smi = row["smiles"]
-        log.info(f"[{i}/{len(rows)}] {cid}")
+        log.info(f"[{i}/{len(todo)}] {cid}")
 
         lig_pdbqt = out / "ligands" / f"{cid}.pdbqt"
         pose_pdbqt = out / "poses" / f"{cid}_{args.site}.pdbqt"
         if not smiles_to_pdbqt(smi, lig_pdbqt):
             log.warning(f"  prep failed")
-            results.append({"id": cid, "smiles": smi, "status": "prep_failed"})
+            emit({"id": cid, "smiles": smi, "status": "prep_failed"})
             continue
 
         modes, log_text = run_gnina(
-            RECEPTOR_PDBQT, lig_pdbqt, g["center_xyz_A"], g["box_size_A"],
+            receptor_path, lig_pdbqt, g["center_xyz_A"], g["box_size_A"],
             pose_pdbqt, exhaustiveness=args.exhaustiveness, num_modes=args.num_modes,
             cnn_scoring=args.cnn_scoring,
         )
         if not modes:
             log.warning(f"  GNINA produced no modes")
-            results.append({"id": cid, "smiles": smi, "status": "no_modes", "log": log_text[:200]})
+            emit({"id": cid, "smiles": smi, "status": "no_modes"})
             continue
 
         # Best by CNN pose score (most native-like pose); also report best Vina + best CNN affinity
@@ -167,7 +208,7 @@ def main():
             f"CNN_pose best={best_cnn_pose['cnn_pose_score']:.3f}  "
             f"CNN_pKd best={best_cnn_aff['cnn_affinity_pkd']:.2f} (={10**(-best_cnn_aff['cnn_affinity_pkd'])*1e6:.1f} µM)"
         )
-        results.append({
+        emit({
             "id": cid, "smiles": smi,
             "best_vina_kcal": best_vina["affinity_kcal"],
             "best_cnn_pose_score": best_cnn_pose["cnn_pose_score"],
@@ -180,17 +221,8 @@ def main():
             "status": "ok",
         })
 
-    # Write
-    cols = ["id", "smiles", "best_vina_kcal", "best_cnn_pose_score",
-            "best_cnn_affinity_pkd", "best_cnn_affinity_uM", "n_modes",
-            "all_vina", "all_cnn_pose", "all_cnn_pkd", "status"]
-    res_csv = out / "dock_results_gnina.csv"
-    with open(res_csv, "w", newline="") as f:
-        w = csv.DictWriter(f, fieldnames=cols)
-        w.writeheader()
-        for r in results:
-            w.writerow({k: r.get(k, "") for k in cols})
-    log.info(f"Wrote {res_csv}")
+    csv_fh.close()
+    log.info(f"Wrote {res_csv} ({len(results)} total rows)")
 
     # Summary: top by CNN pKd (best Kd prediction)
     ok = [r for r in results if r.get("status") == "ok"]

@@ -43,5 +43,25 @@
     ],
     "exhaustiveness": 16,
     "num_modes": 9
+  },
+  "G": {
+    "anchor_residues": [
+      48,
+      50,
+      81,
+      210
+    ],
+    "center_xyz_A": [
+      -21.487,
+      -17.355,
+      -3.892
+    ],
+    "box_size_A": [
+      22.0,
+      22.0,
+      22.0
+    ],
+    "exhaustiveness": 16,
+    "num_modes": 9
   }
 }
