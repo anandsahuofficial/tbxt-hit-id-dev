@@ -1,0 +1,4 @@
+id,smiles
+Z795991852,Cn1c(=O)c2ccccc2n2c(COC(=O)c3cccc(NC(=O)C4Cc5ccccc5O4)c3)nnc12
+Z795991852_analog_0008,O=C(Nc1cccc(-c2cccc(C3Cc4ccccc4O3)c2)c1)C1Cc2ccccc2O1
+opv1_000063,OB(O)c1cccc(Nc2cccc(C(F)(F)F)c2)c1
