@@ -66,15 +66,17 @@ def main():
         print("\nDry-run — exiting without submitting workflows.")
         return
 
+    # rowan-python 3.0.8 ships without a populated rowan/__init__.py, so
+    # `import rowan` is an empty namespace package and `rowan.api_key = ...`
+    # would silently no-op. Submodule imports work fine, and the SDK reads
+    # the API key from $ROWAN_API_KEY automatically.
     try:
-        import rowan
         from rowan.workflows.admet import submit_admet_workflow
     except ImportError:
-        print("ERROR: rowan SDK not installed. Install:", file=sys.stderr)
-        print("  pip install rowan-sdk", file=sys.stderr)
+        print("ERROR: rowan-python not installed. Install:", file=sys.stderr)
+        print("  pip install rowan-python", file=sys.stderr)
         sys.exit(1)
-
-    rowan.api_key = api_key  # type: ignore
+    os.environ["ROWAN_API_KEY"] = api_key  # ensure subprocess + httpx see it
 
     output = {
         "picks": [],
@@ -105,20 +107,33 @@ def main():
         print("\n=== Docking (vs TBXT receptor) ===")
         try:
             from rowan.workflows.docking import submit_docking_workflow
+            from rowan.protein import upload_protein
+            # Site F grid (6F59_apo): center=(0.517, -13.131, -7.479), 22x22x22 Å.
+            # Rowan pocket schema: [[cx,cy,cz], [sx,sy,sz]] (center + size).
+            pocket = [[0.517, -13.131, -7.479], [22.0, 22.0, 22.0]]
             # Upload protein once
             print("  uploading receptor...")
-            protein = rowan.Protein.upload_from_pdb(args.receptor_pdb)  # type: ignore
+            protein = upload_protein(name="TBXT_6F59_apo", file_path=args.receptor_pdb)
+            print(f"  protein uuid: {protein.uuid}")
             for entry in output["picks"]:
                 cid, smi = entry["id"], entry["smiles"]
                 try:
                     wf = submit_docking_workflow(
-                        initial_smiles=smi,
-                        protein=protein.uuid,
+                        protein=protein,
+                        pocket=pocket,
+                        initial_molecule=smi,
+                        do_csearch=True,
                         name=f"TBXT_dock_{cid}")
                     res = wf.result()
-                    scores = getattr(res, "scores", None) or {}
-                    entry["rowan_docking"] = dict(scores)
-                    print(f"    {cid}: scores keys={list(scores.keys())[:4]}")
+                    scores_list = getattr(res, "scores", None) or []
+                    # scores is a list of DockingScore dataclasses; pluck best
+                    best = min((s.score for s in scores_list), default=None) if scores_list else None
+                    entry["rowan_docking"] = {
+                        "n_poses": len(scores_list),
+                        "best_score": best,
+                        "scores": [s.score for s in scores_list[:5]],
+                    }
+                    print(f"    {cid}: n_poses={len(scores_list)} best_score={best}")
                 except Exception as e:
                     print(f"    {cid}: DOCK FAILED ({e})")
                     entry["rowan_docking"] = {"error": str(e)}

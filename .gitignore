@@ -130,3 +130,6 @@ TBXT/report/backup_*/
 
 # ─── Files we DO want in git (overrides above with explicit !) ─────────────
 # (None currently — keep this section in case we need it later)
+rowan_info.txt
+/rowan_info.txt
+**/rowan_info.txt
