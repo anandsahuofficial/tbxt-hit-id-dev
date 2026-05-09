@@ -128,8 +128,12 @@ TBXT/report/backup_*/
 /.variants_run_logs/
 /variants_run.log
 
-# ─── Files we DO want in git (overrides above with explicit !) ─────────────
-# (None currently — keep this section in case we need it later)
+# ─── Sensitive lead-only files (must NEVER reach git) ─────────────
 rowan_info.txt
 /rowan_info.txt
 **/rowan_info.txt
+
+# ─── Files we DO want in git (overrides above with explicit !) ─────────────
+# Render PNGs referenced by SUBMISSION.md / SLIDES.md
+!TBXT/data/task*/trial*/renders/
+!TBXT/data/task*/trial*/renders/*.png
