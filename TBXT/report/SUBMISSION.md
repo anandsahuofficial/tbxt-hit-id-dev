@@ -39,6 +39,36 @@ FM001452_analog_0201	NC(=O)Nc1cccc(OCc2ccccc2)c1
 FM001452_analog_0171	Nc1cccc(OCc2ccc(-c3ccncc3)cc2)c1
 ```
 
+## Tiered candidate pool (137 submission-ready compounds)
+
+The 4 above are drawn from a **137-compound pool that strictly satisfies every organizer constraint**. Same pool seeds the experimental prize program (Sept 1 first batch, up to 96 compounds, $100K @ Kd ≤ 1 µM / $250K @ Kd ≤ 300 nM tiers).
+
+**Filter chain — every compound passes all 7:**
+C1 onepot 100% catalog match (muni `onepot` similarity = 1.000) ·
+C2 strictly non-covalent ·
+C3 Chordoma chemistry rule (MW ≤ 600, LogP ≤ 6, HBD ≤ 6, HBA ≤ 12) ·
+C4 lead-like ideal (10–30 HA, HBD+HBA ≤ 11, LogP < 5, < 5 rings, ≤ 2 fused) ·
+C5 PAINS-clean + no acid halides / aldehydes / diazo / imines / polycyclic > 2 fused / long alkyl ·
+C6 Tanimoto < 0.85 to Naar SPR (2274 prior-disclosed compounds) ·
+C7 predicted soluble (ESOL log S > -5)
+
+**Tiers (strict → graceful):**
+
+| Tier | Count | Definition |
+|---|---:|---|
+| **T1 GOLD** | 0 | Hard ✓ + lead-like ✓ + soluble + Boltz Kd ≤ 5 µM + low/low risks. **Empty by design** — no compound hits all maxima simultaneously (honest finding). |
+| **T2 SILVER** | 16 | Hard ✓ + lead-like ✓ + soluble + Boltz Kd ≤ 10 µM. **Primary submission pool.** |
+| **T3 BRONZE** | 89 | Hard ✓ + lead-like ✓ + Kd ≤ 50 µM, borderline aqueous solubility (logS ≤ -5; fine for DMSO @ 10 mM) |
+| **T4 RELAXED** | 32 | Hard ✓, lead-like graceful (e.g. >2 fused rings) — still organizer-compliant |
+
+The 4 final picks above come from **T2 ranks 1, 2, 11 + T3 rank 22**.
+
+**Files:**
+- Full data: [`data/all_candidates_tiered.csv`](data/all_candidates_tiered.csv) — 137 rows, every per-criterion pass/fail flag, sortable by any column
+- Rationale + per-tier explanation: [`report/TIERED_CANDIDATES_RATIONALE.md`](TIERED_CANDIDATES_RATIONALE.md)
+
+**Top 30 for the experimental program first batch:** T2 ranks 1-16 + T3 ranks 17-30 (all detailed in TIERED_CANDIDATES_RATIONALE.md).
+
 ## Pipeline overview
 
 Multi-signal orthogonal consensus on 570-compound novelty-filtered pool

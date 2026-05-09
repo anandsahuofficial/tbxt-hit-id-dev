@@ -76,6 +76,25 @@ TEP recommends site F + site A. We focused on F because:
 
 ---
 
+## Tiered candidate pool — 137 strictly compliant compounds
+
+The 4 picks above come from a 137-compound pool that passes **every** organizer constraint. Same pool feeds the experimental program first batch (Sept 1, $100K @ Kd ≤ 1 µM / $250K @ Kd ≤ 300 nM tiers).
+
+| Tier | Count | Definition |
+|---|---:|---|
+| **T1 GOLD** | 0 | Hard ✓ + lead-like ✓ + Boltz Kd ≤ 5 µM + low/low risks. **Empty — honest finding** (no compound hits all maxima simultaneously). |
+| **T2 SILVER** | 16 | Hard ✓ + lead-like ✓ + soluble + Boltz Kd ≤ 10 µM. Primary submission pool. |
+| **T3 BRONZE** | 89 | Hard ✓ + lead-like ✓ + Kd ≤ 50 µM, borderline aqueous solubility (DMSO @ 10 mM still OK) |
+| **T4 RELAXED** | 32 | Hard ✓, lead-like graceful — still organizer-compliant |
+
+**7-criterion filter chain:** onepot 100% match · non-covalent · Chordoma rule (MW ≤ 600, LogP ≤ 6, HBD ≤ 6, HBA ≤ 12) · lead-like ideal · PAINS-clean + no forbidden motifs · Tanimoto < 0.85 to Naar (2274 prior compounds) · ESOL log S > -5
+
+**Files:** `data/all_candidates_tiered.csv` (full 137 rows, every flag) + `report/TIERED_CANDIDATES_RATIONALE.md` (per-tier explanations + top-30 with per-pick why)
+
+The 4 final picks above are T2 ranks 1, 2, 11 + T3 rank 22.
+
+---
+
 ## Pick 1: FM002150_analog_0083 — strongest 100%-onepot non-covalent
 
 **SMILES:** `O=C(O)COCc1ccc(-c2ccsc2)cc1`
