@@ -138,3 +138,40 @@ rowan_info.txt
 # Render PNGs referenced by SUBMISSION.md / SLIDES.md
 !TBXT/data/task*/trial*/renders/
 !TBXT/data/task*/trial*/renders/*.png
+chordoma_about.txt
+/chordoma_about.txt
+**/chordoma_about.txt
+
+# ─── Lead-only presentation script (NOT for shared distribution) ───
+/.lead_only/
+
+# ─── Authorship draft — committed publicly only after contributor list is finalized ───
+/AUTHORS.md
+/CITATION.cff
+
+# ─── Personal contact list (PII — never commit) ───
+/.authors_name.txt
+.authors_name.txt
+**/.authors_name.txt
+
+# ─── Lead-only working notes ───
+/CRITERIA.md
+/CURRENT_STATE.md
+/showcase_README_draft.md
+
+# ─── Member contribution dumps (1.8 GB) and variant outputs (135 MB) ───
+# These are evidence files, kept locally and on HuggingFace, not in git
+TBXT/member_data/
+TBXT/data/variants/
+
+# ─── Intermediate onepot/muni working data ───
+TBXT/data/onepot_bbs_sample.csv
+TBXT/data/onepot_results.csv
+TBXT/scripts/team/onepot_muni_*.json
+TBXT/scripts/team/onepot_muni_*_ids.csv
+TBXT/scripts/team/onepot_expand_top100.csv
+
+# ─── Editor-style accidental copies ───
+*\ copy.md
+*\ copy.pdf
+*\ copy\ [0-9]*.pdf
