@@ -4,7 +4,7 @@ theme: default
 paginate: true
 ---
 
-# TBXT Hit Identification — Top 4 Picks
+# TBXT Hit Identification - Top 4 Picks
 
 **Multi-signal consensus pipeline for chordoma's master regulator**
 

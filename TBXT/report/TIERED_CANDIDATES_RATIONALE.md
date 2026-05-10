@@ -3,7 +3,7 @@
 **Date:** 2026-05-09
 **Purpose:** Submit-ready list satisfying every organizer constraint. Today's hackathon judging rationale built around this filter chain. Same pool feeds the experimental prize program (intent June 1, first batch Sept 1).
 
-**Full data:** `TBXT/data/all_candidates_tiered.csv` (137 rows, every per-criterion pass/fail flag + binding + price + risk).
+**Full data:** `TBXT/final/all_candidates_tiered.csv` (137 rows, every per-criterion pass/fail flag + binding + price + risk).
 
 ---
 
@@ -85,7 +85,7 @@ All 137 candidates in this list **pass C1, C2, C3, C5, C6 strictly**. Tiers belo
 
 ★ = current locked pick #4. Defensible because T3 ranking #22 means it's still in the top 30 overall + dual-engine Boltz cross-validates at 1.02×.
 
-**Remaining 75 T3 compounds** in `data/all_candidates_tiered.csv`.
+**Remaining 75 T3 compounds** in `TBXT/final/all_candidates_tiered.csv`.
 
 ---
 
@@ -98,7 +98,7 @@ All 137 candidates in this list **pass C1, C2, C3, C5, C6 strictly**. Tiers belo
 | Rank | ID | Boltz Kd µM | Lead-like fail | Why interesting |
 |---:|---|---:|---|---|
 | Z3-T4-1 | `Z795991852_analog_0075` | 5.68 / 5.76 | ≥2 fused rings (3) | **Best non-FM binder at 100% match**; quinazolinone-chromene chemotype diversity from FM-dominant T2/T3 |
-| (others as needed) | — | — | — | See `data/all_candidates_tiered.csv` for full list |
+| (others as needed) | — | — | — | See `TBXT/final/all_candidates_tiered.csv` for full list |
 
 ---
 
@@ -136,7 +136,7 @@ The hackathon judges score on three axes — and our filter chain + tiered ratio
 - **Top 10 picks for experimental program first batch:** T2 ranks 1-10 (all Boltz Kd ≤ 7.6 µM, all soluble).
 - **Top 20 picks:** add T2 ranks 11-16 + T3 ranks 17-20.
 - **Top 30 picks:** add T3 ranks 21-30 (above table).
-- **Top 50 picks:** add 20 more from `data/all_candidates_tiered.csv` lines 31-50 (mostly T3 with Boltz 11-16 µM).
+- **Top 50 picks:** add 20 more from `TBXT/final/all_candidates_tiered.csv` lines 31-50 (mostly T3 with Boltz 11-16 µM).
 
 The full 137-row CSV lets you re-rank by any column (e.g. by `muni_chem_risk` only, or by `MW_Da` ascending) for alternative submission strategies.
 

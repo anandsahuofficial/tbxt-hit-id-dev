@@ -10,6 +10,8 @@ paginate: true
 
 Anand Sahu — TBXT Hackathon, Pillar VC Boston, May 9, 2026
 
+*Project lead, methodology, and live demo: Anand Sahu.*
+
 Target: TBXT G177D (Brachyury) · PDB 6F59 chain A · Site F (Y88 / D177 / L42)
 
 > v3 deck: all 4 picks swapped to satisfy organizer T-0 hard constraints (100% onepot exact match, non-covalent, Tanimoto < 0.85 to organizer DBs).
@@ -89,7 +91,7 @@ The 4 picks above come from a 137-compound pool that passes **every** organizer 
 
 **7-criterion filter chain:** onepot 100% match · non-covalent · Chordoma rule (MW ≤ 600, LogP ≤ 6, HBD ≤ 6, HBA ≤ 12) · lead-like ideal · PAINS-clean + no forbidden motifs · Tanimoto < 0.85 to Naar (2274 prior compounds) · ESOL log S > -5
 
-**Files:** `data/all_candidates_tiered.csv` (full 137 rows, every flag) + `report/TIERED_CANDIDATES_RATIONALE.md` (per-tier explanations + top-30 with per-pick why)
+**Files:** `TBXT/final/all_candidates_tiered.csv` (full 137 rows, every flag) + `report/TIERED_CANDIDATES_RATIONALE.md` (per-tier explanations + top-30 with per-pick why)
 
 The 4 final picks above are T2 ranks 1, 2, 11 + T3 rank 22.
 
